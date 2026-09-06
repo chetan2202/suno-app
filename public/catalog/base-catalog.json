@@ -1,21 +1,347 @@
 {
-  "version": 1,
+  "version": 2,
   "source": "BASE",
-  "items": [
-    { "catalog_item_id": "milk", "name": "Milk", "default_unit": "litre", "category": "Dairy" },
-    { "catalog_item_id": "bread", "name": "Bread", "default_unit": "loaf", "category": "Bakery" },
-    { "catalog_item_id": "eggs", "name": "Eggs", "default_unit": "dozen", "category": "Dairy" },
-    { "catalog_item_id": "rice", "name": "Rice", "default_unit": "kg", "category": "Grains" },
-    { "catalog_item_id": "atta", "name": "Atta", "default_unit": "kg", "category": "Grains" },
-    { "catalog_item_id": "sugar", "name": "Sugar", "default_unit": "kg", "category": "Pantry" },
-    { "catalog_item_id": "salt", "name": "Salt", "default_unit": "kg", "category": "Pantry" },
-    { "catalog_item_id": "onions", "name": "Onions", "default_unit": "kg", "category": "Vegetables" },
-    { "catalog_item_id": "potatoes", "name": "Potatoes", "default_unit": "kg", "category": "Vegetables" },
-    { "catalog_item_id": "tomatoes", "name": "Tomatoes", "default_unit": "kg", "category": "Vegetables" },
-    { "catalog_item_id": "soap", "name": "Soap", "default_unit": "bar", "category": "Personal Care" },
-    { "catalog_item_id": "shampoo", "name": "Shampoo", "default_unit": "bottle", "category": "Personal Care" },
-    { "catalog_item_id": "toothpaste", "name": "Toothpaste", "default_unit": "tube", "category": "Personal Care" },
-    { "catalog_item_id": "oil", "name": "Cooking Oil", "default_unit": "litre", "category": "Pantry" },
-    { "catalog_item_id": "tea", "name": "Tea", "default_unit": "pack", "category": "Beverages" }
+  "region": "IN",
+  "note": "Master starter catalog for an Indian household. Category > subcategory > item. Each category carries a diet tag; a household picks a profile at entry and only sees matching categories. The house admin can add or remove entries locally; removed entries are hidden from every family member.",
+  "diets": {
+    "veg": "Vegetarian item",
+    "nonveg": "Non-vegetarian item",
+    "none": "Not a food item (always shown)"
+  },
+  "profiles": [
+    { "id": "vegetarian", "name": "Vegetarian", "diets": ["veg", "none"] },
+    { "id": "regular", "name": "Regular", "diets": ["veg", "nonveg", "none"] }
+  ],
+  "categories": [
+    {
+      "id": "vegetables",
+      "name": "Vegetables",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "veg_leafy",
+          "name": "Leafy Greens",
+          "items": [
+            { "id": "spinach", "name": "Spinach (Palak)", "unit": "bunch" },
+            { "id": "fenugreek", "name": "Fenugreek (Methi)", "unit": "bunch" },
+            { "id": "coriander", "name": "Coriander (Dhania)", "unit": "bunch" },
+            { "id": "mint", "name": "Mint (Pudina)", "unit": "bunch" }
+          ]
+        },
+        {
+          "id": "veg_root",
+          "name": "Root & Bulb",
+          "items": [
+            { "id": "onion", "name": "Onion (Pyaaz)", "unit": "kg" },
+            { "id": "potato", "name": "Potato (Aloo)", "unit": "kg" },
+            { "id": "tomato", "name": "Tomato (Tamatar)", "unit": "kg" },
+            { "id": "ginger", "name": "Ginger (Adrak)", "unit": "g" },
+            { "id": "garlic", "name": "Garlic (Lehsun)", "unit": "g" },
+            { "id": "carrot", "name": "Carrot (Gajar)", "unit": "kg" }
+          ]
+        },
+        {
+          "id": "veg_other",
+          "name": "Other Vegetables",
+          "items": [
+            { "id": "okra", "name": "Okra (Bhindi)", "unit": "kg" },
+            { "id": "brinjal", "name": "Brinjal (Baingan)", "unit": "kg" },
+            { "id": "cauliflower", "name": "Cauliflower (Gobhi)", "unit": "piece" },
+            { "id": "cabbage", "name": "Cabbage (Patta Gobhi)", "unit": "piece" },
+            { "id": "capsicum", "name": "Capsicum (Shimla Mirch)", "unit": "kg" },
+            { "id": "green_peas", "name": "Green Peas (Matar)", "unit": "kg" },
+            { "id": "bottle_gourd", "name": "Bottle Gourd (Lauki)", "unit": "piece" },
+            { "id": "green_chilli", "name": "Green Chilli (Hari Mirch)", "unit": "g" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fruits",
+      "name": "Fruits",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "fruits_all",
+          "name": "Fresh Fruits",
+          "items": [
+            { "id": "banana", "name": "Banana (Kela)", "unit": "dozen" },
+            { "id": "apple", "name": "Apple (Seb)", "unit": "kg" },
+            { "id": "orange", "name": "Orange (Santra)", "unit": "kg" },
+            { "id": "mango", "name": "Mango (Aam)", "unit": "kg" },
+            { "id": "papaya", "name": "Papaya (Papita)", "unit": "piece" },
+            { "id": "lemon", "name": "Lemon (Nimbu)", "unit": "piece" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "staples",
+      "name": "Staples & Grains",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "staples_flour",
+          "name": "Flours",
+          "items": [
+            { "id": "atta", "name": "Wheat Flour (Atta)", "unit": "kg" },
+            { "id": "maida", "name": "Refined Flour (Maida)", "unit": "kg" },
+            { "id": "besan", "name": "Gram Flour (Besan)", "unit": "kg" },
+            { "id": "suji", "name": "Semolina (Suji)", "unit": "kg" }
+          ]
+        },
+        {
+          "id": "staples_rice",
+          "name": "Rice & Grains",
+          "items": [
+            { "id": "rice", "name": "Rice (Chawal)", "unit": "kg" },
+            { "id": "basmati_rice", "name": "Basmati Rice", "unit": "kg" },
+            { "id": "poha", "name": "Flattened Rice (Poha)", "unit": "kg" }
+          ]
+        },
+        {
+          "id": "staples_pulses",
+          "name": "Pulses & Dals",
+          "items": [
+            { "id": "toor_dal", "name": "Toor Dal (Arhar)", "unit": "kg" },
+            { "id": "moong_dal", "name": "Moong Dal", "unit": "kg" },
+            { "id": "chana_dal", "name": "Chana Dal", "unit": "kg" },
+            { "id": "masoor_dal", "name": "Masoor Dal", "unit": "kg" },
+            { "id": "rajma", "name": "Kidney Beans (Rajma)", "unit": "kg" },
+            { "id": "kabuli_chana", "name": "Chickpeas (Kabuli Chana)", "unit": "kg" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spices",
+      "name": "Spices & Masala",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "spices_ground",
+          "name": "Ground Spices",
+          "items": [
+            { "id": "salt", "name": "Salt (Namak)", "unit": "kg" },
+            { "id": "turmeric", "name": "Turmeric (Haldi)", "unit": "g" },
+            { "id": "red_chilli_powder", "name": "Red Chilli Powder", "unit": "g" },
+            { "id": "coriander_powder", "name": "Coriander Powder (Dhania)", "unit": "g" },
+            { "id": "garam_masala", "name": "Garam Masala", "unit": "g" }
+          ]
+        },
+        {
+          "id": "spices_whole",
+          "name": "Whole Spices",
+          "items": [
+            { "id": "cumin", "name": "Cumin (Jeera)", "unit": "g" },
+            { "id": "mustard_seeds", "name": "Mustard Seeds (Rai)", "unit": "g" },
+            { "id": "black_pepper", "name": "Black Pepper (Kali Mirch)", "unit": "g" },
+            { "id": "bay_leaf", "name": "Bay Leaf (Tej Patta)", "unit": "g" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dairy",
+      "name": "Dairy",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "dairy_all",
+          "name": "Dairy Products",
+          "items": [
+            { "id": "milk", "name": "Milk (Doodh)", "unit": "litre" },
+            { "id": "curd", "name": "Curd (Dahi)", "unit": "kg" },
+            { "id": "paneer", "name": "Paneer", "unit": "g" },
+            { "id": "butter", "name": "Butter (Makkhan)", "unit": "g" },
+            { "id": "ghee", "name": "Ghee", "unit": "litre" },
+            { "id": "cheese", "name": "Cheese", "unit": "g" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "oils",
+      "name": "Oils & Ghee",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "oils_all",
+          "name": "Cooking Oils",
+          "items": [
+            { "id": "cooking_oil", "name": "Cooking Oil", "unit": "litre" },
+            { "id": "mustard_oil", "name": "Mustard Oil (Sarson)", "unit": "litre" },
+            { "id": "refined_oil", "name": "Refined Oil", "unit": "litre" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bakery_breakfast",
+      "name": "Bakery & Breakfast",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "bakery_bread",
+          "name": "Bread & Rusk",
+          "items": [
+            { "id": "bread", "name": "Bread", "unit": "loaf" },
+            { "id": "rusk", "name": "Rusk (Toast)", "unit": "pack" }
+          ]
+        },
+        {
+          "id": "bakery_cereal",
+          "name": "Cereals",
+          "items": [
+            { "id": "cornflakes", "name": "Cornflakes", "unit": "pack" },
+            { "id": "oats", "name": "Oats", "unit": "pack" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "beverages",
+      "name": "Beverages",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "beverages_hot",
+          "name": "Tea & Coffee",
+          "items": [
+            { "id": "tea", "name": "Tea (Chai Patti)", "unit": "pack" },
+            { "id": "coffee", "name": "Coffee", "unit": "pack" }
+          ]
+        },
+        {
+          "id": "beverages_health",
+          "name": "Health Drinks",
+          "items": [
+            { "id": "health_drink", "name": "Health Drink (Bournvita/Horlicks)", "unit": "pack" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "condiments",
+      "name": "Condiments & Spreads",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "condiments_all",
+          "name": "Sauces, Pickles & Spreads",
+          "items": [
+            { "id": "ketchup", "name": "Tomato Ketchup", "unit": "bottle" },
+            { "id": "pickle", "name": "Pickle (Achar)", "unit": "jar" },
+            { "id": "jam", "name": "Jam", "unit": "jar" },
+            { "id": "honey", "name": "Honey (Shahad)", "unit": "bottle" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sweeteners_dryfruits",
+      "name": "Sweeteners & Dry Fruits",
+      "diet": "veg",
+      "subcategories": [
+        {
+          "id": "sweeteners",
+          "name": "Sweeteners",
+          "items": [
+            { "id": "sugar", "name": "Sugar (Cheeni)", "unit": "kg" },
+            { "id": "jaggery", "name": "Jaggery (Gud)", "unit": "kg" }
+          ]
+        },
+        {
+          "id": "dry_fruits",
+          "name": "Dry Fruits",
+          "items": [
+            { "id": "almonds", "name": "Almonds (Badam)", "unit": "g" },
+            { "id": "cashew", "name": "Cashew (Kaju)", "unit": "g" },
+            { "id": "raisins", "name": "Raisins (Kishmish)", "unit": "g" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "personal_care",
+      "name": "Personal Care",
+      "diet": "none",
+      "subcategories": [
+        {
+          "id": "pc_bath_hair",
+          "name": "Bath & Hair",
+          "items": [
+            { "id": "soap", "name": "Soap", "unit": "bar" },
+            { "id": "shampoo", "name": "Shampoo", "unit": "bottle" },
+            { "id": "hair_oil", "name": "Hair Oil", "unit": "bottle" },
+            { "id": "face_wash", "name": "Face Wash", "unit": "tube" }
+          ]
+        },
+        {
+          "id": "pc_oral",
+          "name": "Oral Care",
+          "items": [
+            { "id": "toothpaste", "name": "Toothpaste", "unit": "tube" },
+            { "id": "toothbrush", "name": "Toothbrush", "unit": "piece" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household",
+      "name": "Household & Cleaning",
+      "diet": "none",
+      "subcategories": [
+        {
+          "id": "household_clean",
+          "name": "Cleaning",
+          "items": [
+            { "id": "detergent", "name": "Detergent (Surf)", "unit": "kg" },
+            { "id": "dishwash", "name": "Dishwash Bar/Liquid", "unit": "piece" },
+            { "id": "floor_cleaner", "name": "Floor Cleaner (Phenyl)", "unit": "bottle" },
+            { "id": "toilet_cleaner", "name": "Toilet Cleaner", "unit": "bottle" }
+          ]
+        },
+        {
+          "id": "household_essentials",
+          "name": "Kitchen Essentials",
+          "items": [
+            { "id": "garbage_bags", "name": "Garbage Bags", "unit": "pack" },
+            { "id": "matchbox", "name": "Matchbox / Lighter", "unit": "piece" },
+            { "id": "agarbatti", "name": "Agarbatti / Dhoop", "unit": "pack" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "non_vegetarian",
+      "name": "Non-Vegetarian",
+      "diet": "nonveg",
+      "subcategories": [
+        {
+          "id": "nonveg_eggs",
+          "name": "Eggs",
+          "items": [
+            { "id": "eggs", "name": "Eggs (Ande)", "unit": "dozen" }
+          ]
+        },
+        {
+          "id": "nonveg_meat",
+          "name": "Meat",
+          "items": [
+            { "id": "chicken", "name": "Chicken", "unit": "kg" },
+            { "id": "mutton", "name": "Mutton", "unit": "kg" }
+          ]
+        },
+        {
+          "id": "nonveg_seafood",
+          "name": "Fish & Seafood",
+          "items": [
+            { "id": "fish", "name": "Fish (Machhli)", "unit": "kg" },
+            { "id": "prawns", "name": "Prawns (Jhinga)", "unit": "kg" }
+          ]
+        }
+      ]
+    }
   ]
 }

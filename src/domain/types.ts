@@ -52,6 +52,54 @@ export interface CatalogItem {
   source: CatalogSource;
 }
 
+// --- Master catalog (the hierarchical starter list shipped as JSON) ---
+//
+// The master catalog is category > subcategory > item, region-specific (India for
+// v0.1). Diet drives profile filtering: a household picks a profile at entry and only
+// sees categories whose diet is included by that profile. The house admin can add or
+// remove entries locally; a removed entry is hidden from every family member.
+
+/** Diet classification of a category/item. "none" = non-food, always shown. */
+export type Diet = "veg" | "nonveg" | "none";
+
+/** A household diet profile chosen at entry, e.g. Vegetarian or Regular. */
+export interface CatalogProfile {
+  id: string;
+  name: string;
+  diets: Diet[]; // which category diets this profile shows
+}
+
+/** A leaf product in the master catalog. */
+export interface MasterItem {
+  id: string;
+  name: string;
+  unit: string;
+}
+
+/** A subcategory grouping items under a category. */
+export interface MasterSubcategory {
+  id: string;
+  name: string;
+  items: MasterItem[];
+}
+
+/** A top-level category carrying a diet tag. */
+export interface MasterCategory {
+  id: string;
+  name: string;
+  diet: Diet;
+  subcategories: MasterSubcategory[];
+}
+
+/** The whole master catalog document (public/catalog/base-catalog.json). */
+export interface MasterCatalog {
+  version: number;
+  source: CatalogSource;
+  region: string;
+  profiles: CatalogProfile[];
+  categories: MasterCategory[];
+}
+
 /** One entry in the append-only operation log. */
 export interface Operation {
   operation_id: string; // globally unique

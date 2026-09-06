@@ -1,11 +1,17 @@
 // Layer 1 — Presentation. Minimal app shell for the v0.1 scaffold.
 // Full members + grocery-list UI lands in later v0.1 steps (plan.md). This just
-// proves the toolchain builds and renders, and shows the loaded base catalog size.
+// proves the toolchain builds and renders, and reports the loaded master catalog.
 
-interface BaseCatalog {
-  version: number;
-  source: string;
-  items: Array<{ catalog_item_id: string; name: string }>;
+import type { MasterCatalog } from "../domain/types.js";
+
+function countItems(catalog: MasterCatalog): number {
+  let n = 0;
+  for (const category of catalog.categories) {
+    for (const sub of category.subcategories) {
+      n += sub.items.length;
+    }
+  }
+  return n;
 }
 
 export async function renderAppShell(root: HTMLElement): Promise<void> {
@@ -24,9 +30,12 @@ export async function renderAppShell(root: HTMLElement): Promise<void> {
 
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}catalog/base-catalog.json`);
-    const catalog = (await res.json()) as BaseCatalog;
-    status.textContent = `Base catalog loaded: ${catalog.items.length} products ready.`;
+    const catalog = (await res.json()) as MasterCatalog;
+    const profiles = catalog.profiles.map((p) => p.name).join(" / ");
+    status.textContent =
+      `Master catalog loaded: ${catalog.categories.length} categories, ` +
+      `${countItems(catalog)} products. Profiles: ${profiles}.`;
   } catch {
-    status.textContent = "Could not load base catalog.";
+    status.textContent = "Could not load master catalog.";
   }
 }
