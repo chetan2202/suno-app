@@ -38,7 +38,15 @@ export class HouseholdRepository {
   ) {}
 
   static async open(port: PersistencePort, env: HouseholdEnv = defaultEnv): Promise<HouseholdRepository> {
-    const settings = (await port.loadMeta<HouseholdSettings>(META_SETTINGS_KEY)) ?? defaultSettings();
+    const stored = await port.loadMeta<Partial<HouseholdSettings>>(META_SETTINGS_KEY);
+    // Backfill any fields missing from an older stored shape.
+    const settings: HouseholdSettings = { ...defaultSettings(), ...(stored ?? {}) };
+    // Legacy migration: a device already onboarded before roles existed was the admin.
+    if (settings.onboarded && settings.role === null) {
+      settings.role = "admin";
+      if (!settings.household_id) settings.household_id = newHouseholdId();
+    }
+    if (stored) await port.saveMeta(META_SETTINGS_KEY, settings); // persist normalization
     const customization =
       (await port.loadMeta<CatalogCustomization>(META_CATALOG_KEY)) ?? emptyCustomization();
     const members = await port.loadMembers();

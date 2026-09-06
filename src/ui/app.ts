@@ -80,11 +80,13 @@ export class AppController {
       this.memberJoining = false;
       this.render();
     },
-    renameHousehold: async (name) => { await this.app.household.renameHousehold(name); this.render(); },
+    // Rename actions fire on blur; do NOT re-render (it would steal focus from a field
+    // the user may still be filling). The DOM already shows the new value.
+    renameHousehold: async (name) => { await this.app.household.renameHousehold(name); },
 
     setProfile: async (id) => { await this.app.household.setProfile(id); this.render(); },
     addMember: async (name) => { await this.app.household.addMember(name); this.render(); },
-    renameMember: async (id, name) => { await this.app.household.renameMember(id, name); this.render(); },
+    renameMember: async (id, name) => { await this.app.household.renameMember(id, name); },
     removeMember: async (id) => { await this.app.household.removeMember(id); this.render(); },
 
     addItem: async (input) => { await this.app.grocery.addItem(input); this.addSheetItem = null; this.tab = "list"; this.browseCategoryId = null; this.render(); },
