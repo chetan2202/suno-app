@@ -28,7 +28,7 @@ const base: MasterCatalog = {
   ],
 };
 
-const settings = (profile_id: string) => ({ profile_id, onboarded: true });
+const settings = (profile_id: string) => ({ profile_id, onboarded: true, required_app_version: 1 });
 
 describe("resolveCatalog", () => {
   it("Vegetarian profile hides the non-veg category but keeps non-food", () => {

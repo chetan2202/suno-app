@@ -59,6 +59,12 @@ export class HouseholdRepository {
     await this.port.saveMeta(META_SETTINGS_KEY, this.settings);
   }
 
+  /** Set the app version the household requires all devices to run. */
+  async setRequiredVersion(version: number): Promise<void> {
+    this.settings = { ...this.settings, required_app_version: version };
+    await this.port.saveMeta(META_SETTINGS_KEY, this.settings);
+  }
+
   // --- Members ---
 
   getMembers(): readonly Member[] {

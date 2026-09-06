@@ -17,7 +17,7 @@ function env(): HouseholdEnv {
 describe("HouseholdRepository", () => {
   it("defaults to the Regular profile, not yet onboarded", async () => {
     const repo = await HouseholdRepository.open(new MemoryPersistence(), env());
-    expect(repo.getSettings()).toEqual({ profile_id: "regular", onboarded: false });
+    expect(repo.getSettings()).toEqual({ profile_id: "regular", onboarded: false, required_app_version: 0 });
   });
 
   it("persists profile choice and onboarding across reopen", async () => {
@@ -27,7 +27,15 @@ describe("HouseholdRepository", () => {
     await repo.completeOnboarding();
 
     const reopened = await HouseholdRepository.open(port, env());
-    expect(reopened.getSettings()).toEqual({ profile_id: "vegetarian", onboarded: true });
+    expect(reopened.getSettings()).toEqual({ profile_id: "vegetarian", onboarded: true, required_app_version: 0 });
+  });
+
+  it("stores the required app version and keeps it across reopen", async () => {
+    const port = new MemoryPersistence();
+    const repo = await HouseholdRepository.open(port, env());
+    await repo.setRequiredVersion(3);
+    const reopened = await HouseholdRepository.open(port, env());
+    expect(reopened.getSettings().required_app_version).toBe(3);
   });
 
   it("adds, renames, removes members and persists them", async () => {

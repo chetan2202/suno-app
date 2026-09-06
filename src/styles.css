@@ -382,3 +382,48 @@ input[type="checkbox"] {
   height: 1.1rem;
   accent-color: var(--brand);
 }
+
+/* Update banner + forced update */
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #10331f;
+  color: #fff;
+  padding: 0.55rem 1rem;
+}
+.update-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.update-banner .btn {
+  background: #fff;
+  color: #10331f;
+  border-color: #fff;
+}
+.forced-update {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg);
+}
+.forced-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  max-width: 24rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.forced-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+}
+.forced-body {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+}

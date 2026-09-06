@@ -11,10 +11,12 @@ import { renderOnboarding } from "./views/onboarding.js";
 import { renderList } from "./views/list.js";
 import { renderMembers } from "./views/members.js";
 import { renderCatalogEditor } from "./views/catalog-editor.js";
+import { updateBanner } from "./views/update.js";
 
 export class AppController {
   private tab: Tab = "list";
   private onboardingStep: 1 | 2 = 1;
+  private updateApply: (() => void) | null = null;
 
   constructor(
     private readonly root: HTMLElement,
@@ -23,6 +25,12 @@ export class AppController {
   ) {}
 
   mount(): void {
+    this.render();
+  }
+
+  /** Called when the service worker has a new version ready; shows the admin banner. */
+  showUpdateAvailable(apply: () => void): void {
+    this.updateApply = apply;
     this.render();
   }
 
@@ -113,6 +121,9 @@ export class AppController {
   private render(): void {
     const ctx = this.buildCtx();
     clear(this.root);
+    if (this.updateApply) {
+      this.root.append(updateBanner(this.updateApply));
+    }
     if (!ctx.settings.onboarded) {
       this.root.append(renderOnboarding(ctx));
       return;
