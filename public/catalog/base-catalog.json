@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "source": "BASE",
+  "items": [
+    { "catalog_item_id": "milk", "name": "Milk", "default_unit": "litre", "category": "Dairy" },
+    { "catalog_item_id": "bread", "name": "Bread", "default_unit": "loaf", "category": "Bakery" },
+    { "catalog_item_id": "eggs", "name": "Eggs", "default_unit": "dozen", "category": "Dairy" },
+    { "catalog_item_id": "rice", "name": "Rice", "default_unit": "kg", "category": "Grains" },
+    { "catalog_item_id": "atta", "name": "Atta", "default_unit": "kg", "category": "Grains" },
+    { "catalog_item_id": "sugar", "name": "Sugar", "default_unit": "kg", "category": "Pantry" },
+    { "catalog_item_id": "salt", "name": "Salt", "default_unit": "kg", "category": "Pantry" },
+    { "catalog_item_id": "onions", "name": "Onions", "default_unit": "kg", "category": "Vegetables" },
+    { "catalog_item_id": "potatoes", "name": "Potatoes", "default_unit": "kg", "category": "Vegetables" },
+    { "catalog_item_id": "tomatoes", "name": "Tomatoes", "default_unit": "kg", "category": "Vegetables" },
+    { "catalog_item_id": "soap", "name": "Soap", "default_unit": "bar", "category": "Personal Care" },
+    { "catalog_item_id": "shampoo", "name": "Shampoo", "default_unit": "bottle", "category": "Personal Care" },
+    { "catalog_item_id": "toothpaste", "name": "Toothpaste", "default_unit": "tube", "category": "Personal Care" },
+    { "catalog_item_id": "oil", "name": "Cooking Oil", "default_unit": "litre", "category": "Pantry" },
+    { "catalog_item_id": "tea", "name": "Tea", "default_unit": "pack", "category": "Beverages" }
+  ]
+}
