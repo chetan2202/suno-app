@@ -11,15 +11,20 @@ export const DB_VERSION = 1;
 
 export const STORE_OPERATIONS = "operations";
 export const STORE_META = "meta";
+export const STORE_MEMBERS = "members";
 
-/** Key used for the singleton identity record in the meta store. */
+/** Keys for singleton records in the meta store. */
 export const META_IDENTITY_KEY = "identity";
+export const META_SETTINGS_KEY = "settings";
+export const META_CATALOG_KEY = "catalog";
 
 export const upgrade: UpgradeFn = (db, oldVersion) => {
   if (oldVersion < 1) {
     // operation_id is globally unique, so it is the natural key (put is idempotent).
     db.createObjectStore(STORE_OPERATIONS, { keyPath: "operation_id" });
-    // Singletons (identity, later settings) keyed by a string "key".
+    // Singletons (identity, settings, catalog customization) keyed by a string "key".
     db.createObjectStore(STORE_META, { keyPath: "key" });
+    // Household members, keyed by member_id.
+    db.createObjectStore(STORE_MEMBERS, { keyPath: "member_id" });
   }
 };

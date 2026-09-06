@@ -3,16 +3,27 @@
 // operation log and (v0.2) sync slot in behind it. See architecture.md.
 
 import type { OpEnv } from "../domain/operation-factory.js";
+import type { HouseholdEnv } from "./household-repository.js";
 import { GroceryRepository } from "./repository.js";
+import { HouseholdRepository } from "./household-repository.js";
 import { IdbPersistence } from "./idb-persistence.js";
 
 export * from "./port.js";
 export * from "./repository.js";
+export * from "./household-repository.js";
 export * from "./idb-persistence.js";
 export * from "./memory-persistence.js";
 
-/** Open the grocery repository backed by IndexedDB (the browser default). */
-export async function openGroceryRepository(env?: OpEnv): Promise<GroceryRepository> {
+export interface App {
+  grocery: GroceryRepository;
+  household: HouseholdRepository;
+  deviceId: string;
+}
+
+/** Open the whole app over one IndexedDB connection (the browser default). */
+export async function openApp(env?: { op?: OpEnv; household?: HouseholdEnv }): Promise<App> {
   const port = await IdbPersistence.open();
-  return GroceryRepository.open(port, env);
+  const grocery = await GroceryRepository.open(port, env?.op);
+  const household = await HouseholdRepository.open(port, env?.household);
+  return { grocery, household, deviceId: grocery.getDeviceId() };
 }

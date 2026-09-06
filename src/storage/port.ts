@@ -4,8 +4,12 @@
 // Note there is no counters store: a device's sequence and Lamport clock are
 // reconstructed from the operation log on open (see repository.ts). The log is the
 // single source of truth.
+//
+// Members and singleton config (household settings, catalog customization) are simple
+// local records in v0.1 (admin-managed), not operations. v0.2 will fold them into the
+// sync model.
 
-import type { LocalIdentity, Operation } from "../domain/types.js";
+import type { LocalIdentity, Member, Operation } from "../domain/types.js";
 
 export interface PersistencePort {
   /** The local identity, or null on first run. */
@@ -16,4 +20,16 @@ export interface PersistencePort {
   appendOperations(ops: readonly Operation[]): Promise<void>;
   /** Load the whole operation log. */
   loadOperations(): Promise<Operation[]>;
+
+  /** Read a singleton config value by key (settings, catalog customization). */
+  loadMeta<T>(key: string): Promise<T | null>;
+  /** Write a singleton config value by key. */
+  saveMeta<T>(key: string, value: T): Promise<void>;
+
+  /** Load all household members. */
+  loadMembers(): Promise<Member[]>;
+  /** Insert or update a member (keyed by member_id). */
+  putMember(member: Member): Promise<void>;
+  /** Remove a member by id. */
+  deleteMember(memberId: string): Promise<void>;
 }
