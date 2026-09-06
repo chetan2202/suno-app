@@ -75,6 +75,25 @@ export class GroceryRepository {
     return this.state;
   }
 
+  /**
+   * Merge operations received from a peer during sync. Deduplicated by operation_id,
+   * persisted, and folded through the reducer, so applying the same peer's log twice is
+   * a no-op (idempotent). Advances the Lamport clock past anything seen.
+   */
+  async ingestOperations(incoming: readonly Operation[]): Promise<GroceryState> {
+    const known = new Set(this.ops.map((o) => o.operation_id));
+    const fresh = incoming.filter((o) => !known.has(o.operation_id));
+    if (fresh.length > 0) {
+      await this.port.appendOperations(fresh);
+      for (const op of fresh) {
+        this.ops.push(op);
+        this.factory.observe(op.logical_version);
+      }
+      this.state = reduce(this.ops);
+    }
+    return this.state;
+  }
+
   addItem(input: AddPayload): Promise<GroceryState> {
     return this.commit(this.factory.add(input));
   }

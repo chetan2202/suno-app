@@ -6,11 +6,13 @@ import type { Member } from "../domain/types.js";
 import type {
   CatalogCustomization,
   CustomCatalogItem,
+  HouseholdRole,
   HouseholdSettings,
 } from "../domain/catalog.js";
+import type { HouseholdInvite } from "../domain/invite.js";
 import type { PersistencePort } from "./port.js";
 import { defaultSettings, emptyCustomization } from "../domain/catalog.js";
-import { newMemberId } from "../domain/ids.js";
+import { newHouseholdId, newMemberId } from "../domain/ids.js";
 import { META_CATALOG_KEY, META_SETTINGS_KEY } from "./schema.js";
 
 /** Injectable id/clock sources for deterministic tests. */
@@ -41,6 +43,51 @@ export class HouseholdRepository {
       (await port.loadMeta<CatalogCustomization>(META_CATALOG_KEY)) ?? emptyCustomization();
     const members = await port.loadMembers();
     return new HouseholdRepository(port, env, settings, customization, members);
+  }
+
+  // --- Role / household identity ---
+
+  getRole(): HouseholdRole {
+    return this.settings.role;
+  }
+
+  private async patchSettings(patch: Partial<HouseholdSettings>): Promise<void> {
+    this.settings = { ...this.settings, ...patch };
+    await this.port.saveMeta(META_SETTINGS_KEY, this.settings);
+  }
+
+  /** Start a new household on this device (this device becomes the admin). */
+  async startAsAdmin(householdName: string): Promise<void> {
+    await this.patchSettings({
+      role: "admin",
+      household_id: newHouseholdId(),
+      household_name: householdName.trim() || "Home",
+    });
+  }
+
+  /** Join an existing household from a scanned/entered invite (this device is a member). */
+  async joinAsMember(invite: HouseholdInvite): Promise<void> {
+    await this.patchSettings({
+      role: "member",
+      household_id: invite.hid,
+      household_name: invite.hname,
+      profile_id: invite.profile,
+      onboarded: true,
+    });
+  }
+
+  async renameHousehold(name: string): Promise<void> {
+    await this.patchSettings({ household_name: name.trim() || "Home" });
+  }
+
+  /** Reset this device to the first-run state (e.g. wrong role chosen). Keeps device id. */
+  async resetHousehold(): Promise<void> {
+    await this.patchSettings({
+      role: null,
+      onboarded: false,
+      household_id: null,
+      household_name: "Home",
+    });
   }
 
   // --- Settings / onboarding ---

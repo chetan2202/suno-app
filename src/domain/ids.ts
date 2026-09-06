@@ -26,3 +26,8 @@ export function newMemberId(): string {
 export function newDeviceId(): string {
   return `dev-${uuid()}`;
 }
+
+/** A unique household id (created by the admin on first run). */
+export function newHouseholdId(): string {
+  return `hh-${uuid()}`;
+}

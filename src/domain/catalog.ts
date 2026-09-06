@@ -13,12 +13,20 @@
 
 import type { Diet, MasterCatalog, MasterCategory } from "./types.js";
 
+/** This device's role in the household. null until the first-run choice is made. */
+export type HouseholdRole = "admin" | "member" | null;
+
 /** Household diet/onboarding settings (admin-managed, local config in v0.1). */
 export interface HouseholdSettings {
   profile_id: string;
   onboarded: boolean;
   /** App version the household requires all devices to run (see version-gate.ts). */
   required_app_version: number;
+  /** This device's role; null until the user chooses start-as-admin or join-as-member. */
+  role: HouseholdRole;
+  /** Household identity (created by the admin, carried to members via the invite). */
+  household_id: string | null;
+  household_name: string;
 }
 
 /** A product the household added because the master catalog lacked it. */
@@ -40,7 +48,14 @@ export const CUSTOM_CATEGORY_ID = "my_items";
 export const CUSTOM_CATEGORY_NAME = "My Items";
 
 export function defaultSettings(): HouseholdSettings {
-  return { profile_id: "regular", onboarded: false, required_app_version: 0 };
+  return {
+    profile_id: "regular",
+    onboarded: false,
+    required_app_version: 0,
+    role: null,
+    household_id: null,
+    household_name: "Home",
+  };
 }
 
 export function emptyCustomization(): CatalogCustomization {

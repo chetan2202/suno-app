@@ -15,9 +15,16 @@ function env(): HouseholdEnv {
 }
 
 describe("HouseholdRepository", () => {
-  it("defaults to the Regular profile, not yet onboarded", async () => {
+  it("defaults to the Regular profile, not yet onboarded, no role", async () => {
     const repo = await HouseholdRepository.open(new MemoryPersistence(), env());
-    expect(repo.getSettings()).toEqual({ profile_id: "regular", onboarded: false, required_app_version: 0 });
+    expect(repo.getSettings()).toEqual({
+      profile_id: "regular",
+      onboarded: false,
+      required_app_version: 0,
+      role: null,
+      household_id: null,
+      household_name: "Home",
+    });
   });
 
   it("persists profile choice and onboarding across reopen", async () => {
@@ -27,7 +34,28 @@ describe("HouseholdRepository", () => {
     await repo.completeOnboarding();
 
     const reopened = await HouseholdRepository.open(port, env());
-    expect(reopened.getSettings()).toEqual({ profile_id: "vegetarian", onboarded: true, required_app_version: 0 });
+    expect(reopened.getSettings().profile_id).toBe("vegetarian");
+    expect(reopened.getSettings().onboarded).toBe(true);
+  });
+
+  it("starts as admin, joins as member from an invite, and resets", async () => {
+    const port = new MemoryPersistence();
+    const repo = await HouseholdRepository.open(port, env());
+
+    await repo.startAsAdmin("Sharma Family");
+    expect(repo.getRole()).toBe("admin");
+    expect(repo.getSettings().household_name).toBe("Sharma Family");
+    expect(repo.getSettings().household_id).toMatch(/^hh-/);
+
+    await repo.joinAsMember({ v: 1, hid: "hh-x", hname: "Other Home", profile: "vegetarian" });
+    expect(repo.getRole()).toBe("member");
+    expect(repo.getSettings().household_id).toBe("hh-x");
+    expect(repo.getSettings().profile_id).toBe("vegetarian");
+    expect(repo.getSettings().onboarded).toBe(true);
+
+    await repo.resetHousehold();
+    expect(repo.getRole()).toBeNull();
+    expect(repo.getSettings().onboarded).toBe(false);
   });
 
   it("stores the required app version and keeps it across reopen", async () => {
