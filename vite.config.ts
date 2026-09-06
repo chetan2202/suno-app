@@ -15,9 +15,9 @@ export default defineConfig({
       registerType: "prompt",
       includeAssets: ["icons/icon-192.png", "icons/icon-512.png", "catalog/base-catalog.json"],
       manifest: {
-        name: "Family Grocery",
-        short_name: "Grocery",
-        description: "Local-first family grocery list. Offline, no accounts.",
+        name: "Suno",
+        short_name: "Suno",
+        description: "Suno — your family's shared grocery list. Offline, no accounts.",
         start_url: BASE,
         scope: BASE,
         display: "standalone",

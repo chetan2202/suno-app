@@ -1,5 +1,5 @@
-// First-run onboarding, done by the house admin. Step 1: pick a diet profile and add
-// family members. Step 2: customize the catalog. Then Start.
+// Admin onboarding. Step 1: name the household, pick a diet profile, add members.
+// Step 2: customize the catalog. Then Start.
 
 import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
@@ -17,15 +17,24 @@ function profileChoice(ctx: ViewCtx, id: string, title: string, desc: string): H
 }
 
 function step1(ctx: ViewCtx): HTMLElement {
+  const name = el("input", {
+    class: "field grow",
+    type: "text",
+    value: ctx.settings.household_name,
+    placeholder: "Household name (e.g. Home)",
+    onChange: () => void ctx.actions.renameHousehold((name as HTMLInputElement).value),
+  });
   return el("div", { class: "onboard" }, [
     el("h1", { class: "onboard-title", text: "Set up your household" }),
     el("p", { class: "onboard-step", text: "Step 1 of 2" }),
-    el("span", { class: "field-label", text: "Pick a diet profile" }),
+    el("span", { class: "field-label", text: "Household name" }),
+    name,
+    el("span", { class: "field-label", text: "Diet profile" }),
     el("div", { class: "choices" }, [
       profileChoice(ctx, "vegetarian", "Vegetarian", "Only vegetarian items"),
       profileChoice(ctx, "regular", "Regular", "Everything, including non-veg"),
     ]),
-    el("span", { class: "field-label", text: "Add family members" }),
+    el("span", { class: "field-label", text: "Family members" }),
     renderMembers(ctx),
     el("div", { class: "onboard-actions" }, [
       el("button", { class: "btn primary big", text: "Next", onClick: () => ctx.actions.goToStep(2) }),

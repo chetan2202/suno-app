@@ -12,10 +12,14 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.6",
     "fake-indexeddb": "^6.2.5",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vite-plugin-pwa": "^0.21.2",
     "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
   }
 }

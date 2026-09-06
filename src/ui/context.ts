@@ -1,5 +1,6 @@
 // Shared context passed to every view. The controller (app.ts) builds this fresh on
-// each render from the repositories, so views never hold stale state.
+// each render from the repositories plus transient UI state, so views never hold stale
+// state.
 
 import type { App } from "../storage/index.js";
 import type { GroceryItem, MasterCatalog, MasterCategory, Member } from "../domain/types.js";
@@ -7,18 +8,39 @@ import type { GroceryState } from "../domain/reducer.js";
 import type { AddPayload } from "../domain/payloads.js";
 import type { CatalogCustomization, HouseholdSettings } from "../domain/catalog.js";
 
-export type Tab = "list" | "members" | "catalog";
+export type Tab = "list" | "browse";
 
-/** Actions wrap repository mutations, then refresh + re-render. */
+/** Live sync display state, owned by the controller. */
+export interface SyncView {
+  active: boolean;
+  role: "host" | "guest" | null;
+  status: string;
+  /** Code this device must show the other (host: offer; guest: answer). */
+  shareCode: string;
+  busy: boolean;
+}
+
 export interface Actions {
+  // navigation / transient UI
   setTab(tab: Tab): void;
-
-  // onboarding
-  setProfile(profileId: string): Promise<void>;
+  openMenu(): void;
+  closeMenu(): void;
+  selectCategory(categoryId: string | null): void;
+  openAddSheet(item: { id: string; name: string; unit: string; categoryId: string }): void;
+  closeAddSheet(): void;
   goToStep(step: 1 | 2): void;
+
+  // first-run roles
+  chooseAdmin(): void;
+  startAsAdmin(householdName: string): Promise<void>;
+  chooseMember(): void;
+  joinFromCode(code: string): Promise<void>;
   finishOnboarding(): Promise<void>;
+  resetHousehold(): Promise<void>;
+  renameHousehold(name: string): Promise<void>;
 
   // members
+  setProfile(profileId: string): Promise<void>;
   addMember(name: string): Promise<void>;
   renameMember(id: string, name: string): Promise<void>;
   removeMember(id: string): Promise<void>;
@@ -34,20 +56,33 @@ export interface Actions {
   toggleCategoryRemoved(categoryId: string, removed: boolean): Promise<void>;
   addCustomItem(name: string, unit: string): Promise<void>;
   removeCustomItem(id: string): Promise<void>;
+
+  // sync (admin hosts; member joins). Serverless WebRTC over local Wi-Fi.
+  syncHostStart(): Promise<void>;
+  syncHostConnect(answerCode: string): Promise<void>;
+  syncGuestAnswer(offerCode: string): Promise<void>;
+  syncStop(): void;
 }
 
 export interface ViewCtx {
   app: App;
   base: MasterCatalog;
   deviceId: string;
-  tab: Tab;
-  onboardingStep: 1 | 2;
+  appVersion: number;
   settings: HouseholdSettings;
   members: readonly Member[];
   customization: CatalogCustomization;
-  /** Effective catalog for the current profile + customization. */
   resolved: MasterCategory[];
   groceryState: GroceryState;
+
+  // transient UI state
+  tab: Tab;
+  menuOpen: boolean;
+  browseCategoryId: string | null;
+  addSheetItem: { id: string; name: string; unit: string; categoryId: string } | null;
+  onboardingStep: 1 | 2;
+  sync: SyncView;
+
   actions: Actions;
 }
 

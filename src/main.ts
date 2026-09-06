@@ -39,7 +39,7 @@ async function boot(): Promise<void> {
       return;
     }
 
-    controller = new AppController(root, app, base);
+    controller = new AppController(root, app, base, APP_VERSION);
     controller.mount();
   } catch (err) {
     root.textContent = "Could not start the app.";
