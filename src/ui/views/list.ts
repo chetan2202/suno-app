@@ -17,6 +17,8 @@ function memberTag(ctx: ViewCtx, item: GroceryItem): HTMLElement {
 }
 
 function neededRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
+  // Only the admin marks items done; members just raise requests (add + adjust).
+  const isAdmin = ctx.settings.role === "admin";
   return el("li", { class: "row" }, [
     el("span", { class: "row-icon", text: iconFor(item) }),
     el("div", { class: "row-main" }, [
@@ -27,13 +29,15 @@ function neededRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
       el("button", { class: "step", text: "−", "aria-label": "Decrease", onClick: () => void ctx.actions.setQuantity(item.item_id, Math.max(1, item.quantity - 1)) }),
       el("span", { class: "qty-label", text: `${item.quantity} ${item.unit}` }),
       el("button", { class: "step", text: "+", "aria-label": "Increase", onClick: () => void ctx.actions.setQuantity(item.item_id, item.quantity + 1) }),
-      el("button", { class: "icon-btn ok", text: "✓", "aria-label": "Mark done", onClick: () => void ctx.actions.togglePurchased(item) }),
+      isAdmin && el("button", { class: "icon-btn ok", text: "✓", "aria-label": "Mark done", onClick: () => void ctx.actions.togglePurchased(item) }),
       el("button", { class: "icon-btn danger", text: "🗑", "aria-label": "Delete", onClick: () => void ctx.actions.deleteItem(item.item_id) }),
     ]),
   ]);
 }
 
 function doneRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
+  // Done items are the admin's to reopen or clear; members see them read-only.
+  const isAdmin = ctx.settings.role === "admin";
   return el("li", { class: "row done" }, [
     el("span", { class: "row-icon", text: iconFor(item) }),
     el("div", { class: "row-main" }, [
@@ -41,7 +45,7 @@ function doneRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
       memberTag(ctx, item),
       el("span", { class: "qty-label muted", text: `${item.quantity} ${item.unit}` }),
     ]),
-    el("div", { class: "row-actions" }, [
+    isAdmin && el("div", { class: "row-actions" }, [
       el("button", { class: "icon-btn", text: "↺", "aria-label": "Undo", onClick: () => void ctx.actions.togglePurchased(item) }),
       el("button", { class: "icon-btn danger", text: "🗑", "aria-label": "Delete", onClick: () => void ctx.actions.deleteItem(item.item_id) }),
     ]),
