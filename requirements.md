@@ -230,7 +230,17 @@ SHOULD be recoverable/transferable.
 
 ## 8. Future requirements
 
-Potential future features (SHOULD NOT complicate current work): recurring grocery items,
-shopping history, task recurrence/reminders/notifications, additional family modules,
+### Backlog modules (not built yet)
+
+- **Family notice board** — today's menu / food notices, upcoming birthdays, functions to
+  attend, kids' exams, sports matches, parent-teacher meetings, and similar notices.
+- **Ledger** — running accounts such as the milkman's tally or the maid's leaves, as both
+  personal and shared household ledgers.
+- **Calendar** — a family calendar including the Indian Panchang (tithi/dates) and shubh
+  muhurt (auspicious timings).
+
+### Other potential features
+
+Recurring grocery items, shopping history, task recurrence/reminders/notifications,
 encrypted backups, manual export/import, an Android native wrapper, and Play Store
-distribution.
+distribution. These SHOULD NOT complicate current work.

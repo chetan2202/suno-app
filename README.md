@@ -8,8 +8,17 @@ other over the local network.
 Suno is not a single-purpose app. It is a **super-app made of modules**:
 
 - **Grocery** — a shared household grocery list (the first module; complete).
-- **To-do** — per-member task lists with delegation between family members (next module).
+- **To-do** — per-member task lists with delegation between family members (built).
 - More family modules can be added over time behind the same home screen.
+
+**Planned modules (backlog, not built yet):**
+
+- **Family notice board** — today's menu / food notices, upcoming birthdays, functions to
+  attend, kids' exams, sports matches, parent-teacher meetings, and similar family notices.
+- **Ledger** — track running accounts like the milkman's tally or the maid's leaves, as
+  both **personal** ledgers and **shared** household ledgers.
+- **Calendar** — a family calendar including the Indian **Panchang** (tithi/dates) and
+  **shubh muhurt** (auspicious timings).
 
 A home screen presents the modules as tiles; each module owns its own screens.
 

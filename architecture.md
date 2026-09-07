@@ -22,10 +22,16 @@ Central rule:
 
 ```text
 Home (module tiles)
-  ├── Grocery   — shared household list; admin curates, members request
-  ├── To-do     — per-member private lists + delegation; flat peer-to-peer
-  └── (future modules)
+  ├── Grocery       — shared household list; admin curates, members request
+  ├── To-do         — per-member private lists + delegation; flat peer-to-peer
+  └── (backlog)     — Notice board, Ledger, Calendar (see below)
 ```
+
+Backlog modules (not built): **Notice board** (today's menu, birthdays, functions, kids'
+exams / matches / PTM); **Ledger** (milkman tally, maid leaves; personal and shared
+ledgers); **Calendar** (family calendar with the Indian Panchang and shubh muhurt). Each
+will be a module on the same substrate (op log + local persistence + peer sync), choosing
+its own role/sharing model like the existing two.
 
 - A **module** is a self-contained feature: its own domain rules, UI screens, and (where it
   needs one) its own role model. Grocery keeps a light **admin/member** split; To-do is
