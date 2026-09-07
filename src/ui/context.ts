@@ -11,6 +11,9 @@ import type { CloudSyncView } from "../sync/cloud-sync.js";
 
 export type Tab = "list" | "browse";
 
+/** Top-level super-app location: the home screen or a specific module. */
+export type ModuleId = "home" | "grocery" | "todo";
+
 /** Live sync display state, owned by the controller. */
 export interface SyncView {
   active: boolean;
@@ -23,6 +26,8 @@ export interface SyncView {
 
 export interface Actions {
   // navigation / transient UI
+  openModule(id: ModuleId): void;
+  goHome(): void;
   setTab(tab: Tab): void;
   openMenu(): void;
   closeMenu(): void;
@@ -83,6 +88,7 @@ export interface ViewCtx {
   groceryState: GroceryState;
 
   // transient UI state
+  module: ModuleId;
   tab: Tab;
   menuOpen: boolean;
   /** Keys of expanded menu <details> sections, preserved across re-renders. */

@@ -3,7 +3,7 @@
 
 import type { App } from "../storage/index.js";
 import type { MasterCatalog } from "../domain/types.js";
-import type { Actions, SyncView, Tab, ViewCtx } from "./context.js";
+import type { Actions, ModuleId, SyncView, Tab, ViewCtx } from "./context.js";
 import type { SyncStatus } from "../sync/index.js";
 import { resolveCatalog } from "../domain/catalog.js";
 import { decodeInvite } from "../domain/invite.js";
@@ -12,8 +12,10 @@ import { clear, el } from "./dom.js";
 import { renderWelcome } from "./views/welcome.js";
 import { renderJoin } from "./views/join.js";
 import { renderOnboarding } from "./views/onboarding.js";
+import { renderHome } from "./views/home.js";
 import { renderList } from "./views/list.js";
 import { renderBrowse, renderAddSheet } from "./views/browse.js";
+import { renderTodo } from "./views/todo.js";
 import { renderMenu } from "./views/menu.js";
 import { updateBanner } from "./views/update.js";
 
@@ -26,6 +28,7 @@ const SYNC_TEXT: Record<SyncStatus, string> = {
 };
 
 export class AppController {
+  private module: ModuleId = "home";
   private tab: Tab = "list";
   private menuOpen = false;
   private readonly openSections = new Set<string>();
@@ -66,6 +69,8 @@ export class AppController {
   }
 
   private readonly actions: Actions = {
+    openModule: (id) => { this.module = id; this.tab = "list"; this.browseCategoryId = null; this.render(); window.scrollTo(0, 0); },
+    goHome: () => { this.module = "home"; this.menuOpen = false; this.render(); window.scrollTo(0, 0); },
     setTab: (tab) => { this.tab = tab; this.browseCategoryId = null; this.render(); },
     openMenu: () => { this.menuOpen = true; this.render(); },
     closeMenu: () => { this.menuOpen = false; this.render(); },
@@ -88,7 +93,7 @@ export class AppController {
       this.memberJoining = false;
       this.render();
     },
-    finishOnboarding: async () => { await this.app.household.completeOnboarding(); this.tab = "list"; this.render(); },
+    finishOnboarding: async () => { await this.app.household.completeOnboarding(); this.module = "home"; this.render(); },
     resetHousehold: async () => {
       this.syncStopInternal();
       this.cloud.stop();
@@ -202,6 +207,7 @@ export class AppController {
       browseCategoryId: this.browseCategoryId,
       addSheetItem: this.addSheetItem,
       onboardingStep: this.onboardingStep,
+      module: this.module,
       sync: this.sync,
       cloud: this.cloud.getView(),
       actions: this.actions,
@@ -218,22 +224,44 @@ export class AppController {
     if (ctx.settings.role === null && this.memberJoining) { this.root.append(renderJoin(ctx)); return; }
     if (!ctx.settings.onboarded) { this.root.append(renderOnboarding(ctx)); return; }
 
-    // Main app.
-    this.root.append(this.header(ctx), this.body(ctx), this.bottomNav(ctx));
+    // Super-app: home shell, or a specific module.
+    this.root.append(this.header(ctx));
+    if (this.module === "home") {
+      this.root.append(renderHome(ctx));
+    } else if (this.module === "grocery") {
+      this.root.append(this.body(ctx), this.bottomNav(ctx));
+      const sheet = renderAddSheet(ctx);
+      if (sheet) this.root.append(sheet);
+    } else {
+      this.root.append(renderTodo(ctx));
+    }
     if (this.menuOpen) this.root.append(renderMenu(ctx));
-    const sheet = renderAddSheet(ctx);
-    if (sheet) this.root.append(sheet);
   }
 
+  private static readonly MODULE_NAMES: Record<Exclude<ModuleId, "home">, string> = {
+    grocery: "Grocery",
+    todo: "To-do",
+  };
+
   private header(ctx: ViewCtx): HTMLElement {
-    return el("header", { class: "app-bar" }, [
-      el("button", { class: "icon-btn light", text: "☰", "aria-label": "Menu", onClick: () => this.actions.openMenu() }),
+    const onHome = this.module === "home";
+    // On home the left button opens the family menu; inside a module it returns home.
+    const leftBtn = onHome
+      ? el("button", { class: "icon-btn light", text: "☰", "aria-label": "Menu", onClick: () => this.actions.openMenu() })
+      : el("button", { class: "icon-btn light", text: "‹", "aria-label": "Home", onClick: () => this.actions.goHome() });
+    const subtitle = this.module === "home" ? ctx.settings.household_name : AppController.MODULE_NAMES[this.module];
+    const header = el("header", { class: "app-bar" }, [
+      leftBtn,
       el("div", { class: "app-bar-title" }, [
         el("span", { class: "app-name", text: "Suno" }),
-        el("span", { class: "app-house", text: ctx.settings.household_name }),
+        el("span", { class: "app-house", text: subtitle }),
       ]),
-      el("span", { class: "profile-badge", text: ctx.settings.profile_id === "vegetarian" ? "Veg" : "Regular" }),
     ]);
+    // The diet badge is a grocery concern; only show it in the grocery module.
+    if (this.module === "grocery") {
+      header.append(el("span", { class: "profile-badge", text: ctx.settings.profile_id === "vegetarian" ? "Veg" : "Regular" }));
+    }
+    return header;
   }
 
   private body(ctx: ViewCtx): HTMLElement {

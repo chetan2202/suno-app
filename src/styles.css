@@ -183,6 +183,19 @@ textarea.field { min-height: 3rem; resize: vertical; }
 .tile-name { font-size: 0.78rem; font-weight: 600; }
 .tile-add { font-size: 0.72rem; font-weight: 700; color: var(--brand-2); }
 
+/* ---------- Home module tiles ---------- */
+.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.8rem; }
+.home-tile {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem;
+  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+  padding: 1.1rem 1rem 1.2rem; box-shadow: var(--shadow); color: var(--fg);
+  text-align: left; min-height: 6.5rem;
+}
+.home-tile:active { transform: scale(0.98); }
+.home-tile-icon { font-size: 2.2rem; line-height: 1; margin-bottom: 0.2rem; }
+.home-tile-name { font-size: 1.05rem; font-weight: 800; }
+.home-tile-sub { font-size: 0.78rem; opacity: 0.7; }
+
 /* ---------- List rows ---------- */
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
 .row {
