@@ -28,6 +28,7 @@ const SYNC_TEXT: Record<SyncStatus, string> = {
 export class AppController {
   private tab: Tab = "list";
   private menuOpen = false;
+  private readonly openSections = new Set<string>();
   private memberJoining = false;
   private browseCategoryId: string | null = null;
   private addSheetItem: ViewCtx["addSheetItem"] = null;
@@ -57,6 +58,10 @@ export class AppController {
     setTab: (tab) => { this.tab = tab; this.browseCategoryId = null; this.render(); },
     openMenu: () => { this.menuOpen = true; this.render(); },
     closeMenu: () => { this.menuOpen = false; this.render(); },
+    // Remember which menu sections are expanded so a re-render (e.g. sync producing a
+    // code) does not collapse the open section. The DOM already reflects the user's
+    // toggle, so this must NOT re-render — it only records state for the next render.
+    toggleSection: (id, open) => { if (open) this.openSections.add(id); else this.openSections.delete(id); },
     selectCategory: (id) => { this.browseCategoryId = id; this.render(); },
     openAddSheet: (item) => { this.addSheetItem = item; this.render(); },
     closeAddSheet: () => { this.addSheetItem = null; this.render(); },
@@ -177,6 +182,7 @@ export class AppController {
       groceryState: this.app.grocery.getState(),
       tab: this.tab,
       menuOpen: this.menuOpen,
+      openSections: this.openSections,
       browseCategoryId: this.browseCategoryId,
       addSheetItem: this.addSheetItem,
       onboardingStep: this.onboardingStep,

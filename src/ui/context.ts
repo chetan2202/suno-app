@@ -25,6 +25,7 @@ export interface Actions {
   setTab(tab: Tab): void;
   openMenu(): void;
   closeMenu(): void;
+  toggleSection(id: string, open: boolean): void;
   selectCategory(categoryId: string | null): void;
   openAddSheet(item: { id: string; name: string; unit: string; categoryId: string }): void;
   closeAddSheet(): void;
@@ -78,6 +79,8 @@ export interface ViewCtx {
   // transient UI state
   tab: Tab;
   menuOpen: boolean;
+  /** Keys of expanded menu <details> sections, preserved across re-renders. */
+  openSections: ReadonlySet<string>;
   browseCategoryId: string | null;
   addSheetItem: { id: string; name: string; unit: string; categoryId: string } | null;
   onboardingStep: 1 | 2;

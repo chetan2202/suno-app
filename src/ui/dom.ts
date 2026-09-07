@@ -14,12 +14,14 @@ interface Attrs {
   disabled?: boolean;
   checked?: boolean;
   selected?: boolean;
+  open?: boolean;
   title?: string;
   "aria-label"?: string;
   onClick?: (e: MouseEvent) => void;
   onInput?: (e: Event) => void;
   onChange?: (e: Event) => void;
   onSubmit?: (e: SubmitEvent) => void;
+  onToggle?: (e: Event) => void;
 }
 
 export function el<K extends keyof HTMLElementTagNameMap>(
@@ -39,10 +41,12 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   if (attrs.disabled) (node as HTMLButtonElement).disabled = true;
   if (attrs.checked) (node as HTMLInputElement).checked = true;
   if (attrs.selected) (node as HTMLOptionElement).selected = true;
+  if (attrs.open) (node as HTMLDetailsElement).open = true;
   if (attrs.onClick) node.addEventListener("click", attrs.onClick as EventListener);
   if (attrs.onInput) node.addEventListener("input", attrs.onInput as EventListener);
   if (attrs.onChange) node.addEventListener("change", attrs.onChange as EventListener);
   if (attrs.onSubmit) node.addEventListener("submit", attrs.onSubmit as EventListener);
+  if (attrs.onToggle) node.addEventListener("toggle", attrs.onToggle as EventListener);
   for (const child of children) {
     if (child === null || child === undefined || child === false) continue;
     node.append(child);

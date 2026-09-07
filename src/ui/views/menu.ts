@@ -8,6 +8,21 @@ import { qrImage } from "../qr.js";
 import { renderCatalogEditor } from "./catalog-editor.js";
 import { renderMembers } from "./members.js";
 
+// A collapsible menu section whose open/closed state survives re-renders: the key is
+// remembered in the controller (ctx.openSections) and re-applied here, and a user toggle
+// records the new state without forcing a re-render.
+function section(ctx: ViewCtx, key: string, children: (HTMLElement | false)[]): HTMLElement {
+  return el(
+    "details",
+    {
+      class: "menu-section",
+      open: ctx.openSections.has(key),
+      onToggle: (e) => ctx.actions.toggleSection(key, (e.target as HTMLDetailsElement).open),
+    },
+    children.filter((c): c is HTMLElement => c !== false),
+  );
+}
+
 function householdCard(ctx: ViewCtx): HTMLElement {
   const name = el("input", {
     class: "field grow",
@@ -37,7 +52,7 @@ function inviteSection(ctx: ViewCtx): HTMLElement | false {
   });
   const codeBox = el("textarea", { class: "field code-input", value: code }) as HTMLTextAreaElement;
   codeBox.readOnly = true;
-  return el("details", { class: "menu-section" }, [
+  return section(ctx, "invite", [
     el("summary", { text: "👨‍👩‍👧 Invite family" }),
     el("p", { class: "hint", text: "Have the family member open Suno → Join a household, then scan this or paste the code." }),
     el("div", { class: "qr-wrap" }, [qrImage(code)]),
@@ -80,21 +95,21 @@ function syncSection(ctx: ViewCtx): HTMLElement {
     if (s.active) children.push(el("button", { class: "btn ghost full", text: "Stop sync", onClick: () => ctx.actions.syncStop() }));
   }
 
-  return el("details", { class: "menu-section" }, [
+  return section(ctx, "sync", [
     el("summary", { text: "🔁 Sync over Wi-Fi" }),
     el("p", { class: "hint", text: "Both devices must be on the same Wi-Fi. The admin hosts and can stop it anytime." }),
-    ...children.filter((c): c is HTMLElement => c !== false),
+    ...children,
   ]);
 }
 
 function adminSections(ctx: ViewCtx): (HTMLElement | false)[] {
   if (ctx.settings.role !== "admin") return [];
   return [
-    el("details", { class: "menu-section" }, [
+    section(ctx, "catalog", [
       el("summary", { text: "🧺 Catalog & profile" }),
       renderCatalogEditor(ctx),
     ]),
-    el("details", { class: "menu-section" }, [
+    section(ctx, "members", [
       el("summary", { text: "👤 Members" }),
       renderMembers(ctx),
     ]),
