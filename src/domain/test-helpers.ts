@@ -7,11 +7,13 @@ import type { OpEnv } from "./operation-factory.js";
 export function testEnv(startTime = 1000): OpEnv {
   let opN = 0;
   let itemN = 0;
+  let taskN = 0;
   let t = startTime;
   return {
     now: () => t++,
     operationId: () => `op-${++opN}`,
     itemId: () => `item-${++itemN}`,
+    taskId: () => `task-${++taskN}`,
   };
 }
 

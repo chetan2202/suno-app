@@ -2,26 +2,31 @@
 // device id, a per-device monotonic sequence, and a Lamport logical clock. The clock
 // and id sources are injected so the factory is fully deterministic under test.
 
-import type { ItemStatus, Operation, OperationType } from "./types.js";
+import type { ItemStatus, Operation, OperationType, TodoStatus } from "./types.js";
 import type {
   AddPayload,
   SetQuantityPayload,
   SetStatusPayload,
+  TodoAddPayload,
+  TodoEditPayload,
+  TodoRespondPayload,
   UpdatePayload,
 } from "./payloads.js";
-import { newItemId, newOperationId } from "./ids.js";
+import { newItemId, newOperationId, newTaskId } from "./ids.js";
 
 /** Injectable environment: clock and id sources (overridable in tests). */
 export interface OpEnv {
   now: () => number;
   operationId: () => string;
   itemId: () => string;
+  taskId: () => string;
 }
 
 const defaultEnv: OpEnv = {
   now: () => Date.now(),
   operationId: newOperationId,
   itemId: newItemId,
+  taskId: newTaskId,
 };
 
 /** Persisted counters so a device resumes its sequence/clock across sessions. */
@@ -106,5 +111,33 @@ export class OperationFactory {
 
   delete(itemId: string): Operation {
     return this.build(itemId, "DELETE", {});
+  }
+
+  // --- To-do operations (share the same log/clock as grocery) ---
+
+  /** Create a to-do task; returns the operation (its task id is generated). */
+  addTodo(payload: TodoAddPayload): Operation {
+    return this.build(this.env.taskId(), "TODO_ADD", { ...payload });
+  }
+
+  editTodo(taskId: string, payload: TodoEditPayload): Operation {
+    return this.build(taskId, "TODO_EDIT", { ...payload });
+  }
+
+  setTodoDue(taskId: string, dueAt: number | null): Operation {
+    return this.build(taskId, "TODO_SET_DUE", { due_at: dueAt });
+  }
+
+  setTodoStatus(taskId: string, status: TodoStatus): Operation {
+    return this.build(taskId, "TODO_SET_STATUS", { status });
+  }
+
+  /** The assignee accepts or rejects a delegated task. */
+  respondTodo(taskId: string, response: TodoRespondPayload["delegation_status"]): Operation {
+    return this.build(taskId, "TODO_RESPOND", { delegation_status: response });
+  }
+
+  deleteTodo(taskId: string): Operation {
+    return this.build(taskId, "TODO_DELETE", {});
   }
 }

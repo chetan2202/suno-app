@@ -17,6 +17,11 @@ export function newItemId(): string {
   return `item-${uuid()}`;
 }
 
+/** A unique to-do task id. */
+export function newTaskId(): string {
+  return `task-${uuid()}`;
+}
+
 /** A unique member id. */
 export function newMemberId(): string {
   return `mem-${uuid()}`;

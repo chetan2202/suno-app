@@ -10,14 +10,50 @@ export type CatalogSource = "BASE" | "HOUSEHOLD";
 /** Lifecycle of a grocery list line. */
 export type ItemStatus = "needed" | "purchased";
 
-/** Kinds of mutation recorded in the append-only operation log. */
+/** Kinds of mutation recorded in the append-only operation log. Grocery and To-do share
+ * one log; each module's reducer applies its own op types and ignores the others. */
 export type OperationType =
+  // grocery
   | "ADD"
   | "UPDATE"
   | "SET_QUANTITY"
   | "SET_STATUS"
   | "DELETE"
-  | "RESTORE";
+  | "RESTORE"
+  // to-do
+  | "TODO_ADD"
+  | "TODO_EDIT"
+  | "TODO_SET_DUE"
+  | "TODO_SET_STATUS"
+  | "TODO_RESPOND"
+  | "TODO_DELETE";
+
+/** A to-do task's completion state. */
+export type TodoStatus = "open" | "done";
+
+/** For a delegated task, where it stands between delegator and assignee. null = personal. */
+export type DelegationStatus = "pending" | "accepted" | "rejected";
+
+export type TodoPriority = "normal" | "high";
+
+/**
+ * A to-do task. A personal task has created_by_member_id === for_member_id and
+ * delegation_status = null. A delegated task is created by one member for another; both see
+ * it, either can mark it done, and the assignee can accept/reject it.
+ */
+export interface TodoTask {
+  task_id: string;
+  title: string;
+  created_by_member_id: string; // who created the task
+  for_member_id: string; // who it is for (the assignee); === creator for a personal task
+  due_at: number | null; // epoch ms, or null when no time is set
+  priority: TodoPriority;
+  status: TodoStatus;
+  delegation_status: DelegationStatus | null; // null for a personal task
+  created_by: string; // device_id
+  created_at: number;
+  updated_at: number;
+}
 
 /** A named person in the household. Name is free text the user chooses. */
 export interface Member {
