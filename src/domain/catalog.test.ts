@@ -35,6 +35,7 @@ const settings = (profile_id: string) => ({
   role: "admin" as const,
   household_id: "hh-1",
   household_name: "Home",
+  my_member_id: null,
 });
 
 describe("resolveCatalog", () => {

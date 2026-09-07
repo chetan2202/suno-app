@@ -88,6 +88,11 @@ export class HouseholdRepository {
     await this.patchSettings({ household_name: name.trim() || "Home" });
   }
 
+  /** Bind this device to the member the current user is (for the To-do module). */
+  async setMyMember(memberId: string): Promise<void> {
+    await this.patchSettings({ my_member_id: memberId });
+  }
+
   /** Reset this device to the first-run state (e.g. wrong role chosen). Keeps device id. */
   async resetHousehold(): Promise<void> {
     await this.patchSettings({
@@ -95,6 +100,7 @@ export class HouseholdRepository {
       onboarded: false,
       household_id: null,
       household_name: "Home",
+      my_member_id: null,
     });
   }
 
@@ -148,6 +154,7 @@ export class HouseholdRepository {
   async removeMember(memberId: string): Promise<void> {
     await this.port.deleteMember(memberId);
     this.members = this.members.filter((m) => m.member_id !== memberId);
+    if (this.settings.my_member_id === memberId) await this.patchSettings({ my_member_id: null });
   }
 
   // --- Catalog customization (admin) ---

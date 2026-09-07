@@ -1,124 +1,87 @@
-// Layer 3 repository: the clean API the UI and domain use. It owns the operation log
-// and the derived grocery state, and hides persistence behind the port.
-//
-// Mutations create an operation via the OperationFactory, persist it through the port,
-// and re-derive state with the pure reducer. State is never stored directly (it is a
-// fold of the log), which keeps a single source of truth and makes v0.2 sync a matter
-// of merging operations.
+// Layer 3 repository for the grocery module: the clean API the grocery UI/domain use. It
+// owns the derived grocery state and hides the operation log behind a shared OperationStore
+// (see operation-store.ts). State is never stored directly - it is a fold of the log - so a
+// single source of truth remains and sync is just merging operations.
 
-import type { ItemStatus, LocalIdentity, Operation } from "../domain/types.js";
+import type { ItemStatus, Operation } from "../domain/types.js";
 import type { AddPayload, UpdatePayload } from "../domain/payloads.js";
-import type { OpCounters, OpEnv } from "../domain/operation-factory.js";
+import type { OpEnv } from "../domain/operation-factory.js";
 import type { GroceryState } from "../domain/reducer.js";
 import type { PersistencePort } from "./port.js";
-import { OperationFactory } from "../domain/operation-factory.js";
 import { reduce } from "../domain/reducer.js";
-import { newDeviceId } from "../domain/ids.js";
-
-/** Rebuild the factory counters from the log: sequence from this device's ops, the
- * Lamport clock from the highest version seen from any device. */
-function seedCounters(ops: readonly Operation[], deviceId: string): OpCounters {
-  let sequence = 0;
-  let logical_version = 0;
-  for (const op of ops) {
-    if (op.device_id === deviceId && op.sequence > sequence) sequence = op.sequence;
-    if (op.logical_version > logical_version) logical_version = op.logical_version;
-  }
-  return { sequence, logical_version };
-}
+import { OperationStore } from "./operation-store.js";
 
 export class GroceryRepository {
   private state: GroceryState;
 
-  private constructor(
-    private readonly port: PersistencePort,
-    private readonly factory: OperationFactory,
-    private readonly deviceId: string,
-    private readonly ops: Operation[],
-  ) {
-    this.state = reduce(ops);
+  private constructor(private readonly store: OperationStore) {
+    this.state = reduce(store.getOperations());
   }
 
-  /** Open the repository: load or create identity, load the log, seed the factory. */
+  /** Build on an existing shared store (used by openApp so modules share one log). */
+  static fromStore(store: OperationStore): GroceryRepository {
+    return new GroceryRepository(store);
+  }
+
+  /** Open standalone over a port (own store) - convenient for tests. */
   static async open(port: PersistencePort, env?: OpEnv): Promise<GroceryRepository> {
-    let identity = await port.loadIdentity();
-    if (!identity) {
-      identity = { device_id: newDeviceId() } satisfies LocalIdentity;
-      await port.saveIdentity(identity);
-    }
-    const ops = await port.loadOperations();
-    const factory = new OperationFactory(
-      identity.device_id,
-      seedCounters(ops, identity.device_id),
-      env,
-    );
-    return new GroceryRepository(port, factory, identity.device_id, ops);
+    return new GroceryRepository(await OperationStore.open(port, env));
   }
 
   getDeviceId(): string {
-    return this.deviceId;
+    return this.store.deviceId;
   }
 
   getState(): GroceryState {
     return this.state;
   }
 
-  /** The full operation log (used by v0.2 sync). */
+  /** The full operation log (used by sync). */
   getOperations(): readonly Operation[] {
-    return this.ops;
+    return this.store.getOperations();
   }
 
   private async commit(op: Operation): Promise<GroceryState> {
-    await this.port.appendOperations([op]);
-    this.ops.push(op);
-    this.state = reduce(this.ops);
+    await this.store.append(op);
+    this.state = reduce(this.store.getOperations());
     return this.state;
   }
 
   /**
-   * Merge operations received from a peer during sync. Deduplicated by operation_id,
-   * persisted, and folded through the reducer, so applying the same peer's log twice is
-   * a no-op (idempotent). Advances the Lamport clock past anything seen.
+   * Merge operations received from a peer during sync (idempotent). Re-derives grocery state
+   * only when something new arrived.
    */
   async ingestOperations(incoming: readonly Operation[]): Promise<GroceryState> {
-    const known = new Set(this.ops.map((o) => o.operation_id));
-    const fresh = incoming.filter((o) => !known.has(o.operation_id));
-    if (fresh.length > 0) {
-      await this.port.appendOperations(fresh);
-      for (const op of fresh) {
-        this.ops.push(op);
-        this.factory.observe(op.logical_version);
-      }
-      this.state = reduce(this.ops);
-    }
+    const fresh = await this.store.ingest(incoming);
+    if (fresh.length > 0) this.state = reduce(this.store.getOperations());
     return this.state;
   }
 
   addItem(input: AddPayload): Promise<GroceryState> {
-    return this.commit(this.factory.add(input));
+    return this.commit(this.store.factory.add(input));
   }
 
   updateItem(itemId: string, fields: UpdatePayload): Promise<GroceryState> {
-    return this.commit(this.factory.update(itemId, fields));
+    return this.commit(this.store.factory.update(itemId, fields));
   }
 
   setQuantity(itemId: string, quantity: number): Promise<GroceryState> {
-    return this.commit(this.factory.setQuantity(itemId, quantity));
+    return this.commit(this.store.factory.setQuantity(itemId, quantity));
   }
 
   setStatus(itemId: string, status: ItemStatus): Promise<GroceryState> {
-    return this.commit(this.factory.setStatus(itemId, status));
+    return this.commit(this.store.factory.setStatus(itemId, status));
   }
 
   markPurchased(itemId: string): Promise<GroceryState> {
-    return this.commit(this.factory.markPurchased(itemId));
+    return this.commit(this.store.factory.markPurchased(itemId));
   }
 
   restore(itemId: string): Promise<GroceryState> {
-    return this.commit(this.factory.restore(itemId));
+    return this.commit(this.store.factory.restore(itemId));
   }
 
   deleteItem(itemId: string): Promise<GroceryState> {
-    return this.commit(this.factory.delete(itemId));
+    return this.commit(this.store.factory.delete(itemId));
   }
 }

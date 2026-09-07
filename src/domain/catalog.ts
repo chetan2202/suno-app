@@ -27,6 +27,9 @@ export interface HouseholdSettings {
   /** Household identity (created by the admin, carried to members via the invite). */
   household_id: string | null;
   household_name: string;
+  /** Which member THIS device is (for the To-do module: "my list", delegation). null until
+   * the person identifies themselves on this device. */
+  my_member_id: string | null;
 }
 
 /** A product the household added because the master catalog lacked it. */
@@ -55,6 +58,7 @@ export function defaultSettings(): HouseholdSettings {
     role: null,
     household_id: null,
     household_name: "Home",
+    my_member_id: null,
   };
 }
 

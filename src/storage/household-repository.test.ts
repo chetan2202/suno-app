@@ -24,6 +24,7 @@ describe("HouseholdRepository", () => {
       role: null,
       household_id: null,
       household_name: "Home",
+      my_member_id: null,
     });
   });
 
