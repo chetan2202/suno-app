@@ -41,6 +41,7 @@ export interface GroceryItem {
   created_by: string; // device_id
   created_at: number;
   updated_at: number;
+  done_at: number | null; // when marked done (status -> purchased); null while needed
 }
 
 /** A read-only base catalog product, or a household-added product. */

@@ -4,7 +4,7 @@ import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
 import { memberLabel } from "../context.js";
 import type { GroceryItem } from "../../domain/types.js";
-import { selectNeeded, selectPurchased } from "../../domain/reducer.js";
+import { selectNeeded, selectDone } from "../../domain/reducer.js";
 import { itemIcon } from "../../domain/icons.js";
 
 function iconFor(item: GroceryItem): string {
@@ -50,7 +50,7 @@ function doneRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
 
 export function renderList(ctx: ViewCtx): HTMLElement {
   const needed = selectNeeded(ctx.groceryState).sort((a, b) => a.name.localeCompare(b.name));
-  const done = selectPurchased(ctx.groceryState).sort((a, b) => a.name.localeCompare(b.name));
+  const done = selectDone(ctx.groceryState, Date.now()).sort((a, b) => a.name.localeCompare(b.name));
 
   if (needed.length === 0 && done.length === 0) {
     return el("section", { class: "view" }, [

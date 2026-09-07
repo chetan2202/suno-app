@@ -57,6 +57,7 @@ function applyInOrder(state: GroceryState, op: Operation): GroceryState {
         created_by: op.device_id,
         created_at: op.created_at,
         updated_at: op.created_at,
+        done_at: null,
       };
       break;
     }
@@ -79,12 +80,18 @@ function applyInOrder(state: GroceryState, op: Operation): GroceryState {
     case "SET_STATUS": {
       if (!existing) break;
       const p = op.payload as unknown as SetStatusPayload;
-      items[op.item_id] = { ...existing, status: p.status, updated_at: op.created_at };
+      items[op.item_id] = {
+        ...existing,
+        status: p.status,
+        updated_at: op.created_at,
+        // Stamp the done time when marked purchased; clear it when moved back to needed.
+        done_at: p.status === "purchased" ? op.created_at : null,
+      };
       break;
     }
     case "RESTORE": {
       if (!existing) break;
-      items[op.item_id] = { ...existing, status: "needed", updated_at: op.created_at };
+      items[op.item_id] = { ...existing, status: "needed", updated_at: op.created_at, done_at: null };
       break;
     }
     case "DELETE": {
@@ -113,7 +120,24 @@ export function selectNeeded(state: GroceryState): GroceryItem[] {
   return selectItems(state).filter((i) => i.status === "needed");
 }
 
-/** Lines already purchased. */
+/** Lines already purchased (done), including archived ones. */
 export function selectPurchased(state: GroceryState): GroceryItem[] {
   return selectItems(state).filter((i) => i.status === "purchased");
+}
+
+/** A done item is auto-archived this long after it was marked done. */
+export const ARCHIVE_AFTER_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+
+/** Whether a done item has passed the archive window (relative to `now`). */
+export function isArchived(item: GroceryItem, now: number): boolean {
+  return item.status === "purchased" && item.done_at !== null && now - item.done_at >= ARCHIVE_AFTER_MS;
+}
+
+/**
+ * Done lines still worth showing: purchased and not yet auto-archived. Archived items
+ * stay in the log (this is a pure view-time filter), they just drop off the list two
+ * days after being marked done.
+ */
+export function selectDone(state: GroceryState, now: number): GroceryItem[] {
+  return selectPurchased(state).filter((i) => !isArchived(i, now));
 }

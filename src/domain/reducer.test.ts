@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { reduce, selectNeeded, selectPurchased, selectItems } from "./reducer.js";
+import { reduce, selectNeeded, selectPurchased, selectDone, selectItems, ARCHIVE_AFTER_MS } from "./reducer.js";
 import { OperationFactory } from "./operation-factory.js";
 import { makeOp, testEnv } from "./test-helpers.js";
 
@@ -50,6 +50,40 @@ describe("reducer — grocery state from the operation log", () => {
     const restored = reduce([add, f.markPurchased(add.item_id), f.restore(add.item_id)]);
     expect(selectNeeded(restored)).toHaveLength(1);
     expect(selectPurchased(restored)).toHaveLength(0);
+  });
+
+  it("stamps done_at when marked done and clears it on restore", () => {
+    const f = factory();
+    const add = f.add({ catalog_item_id: null, name: "Milk", for_member_id: null, quantity: 1, unit: "litre" });
+
+    const done = reduce([add, f.markPurchased(add.item_id)]);
+    expect(done.items[add.item_id]!.done_at).not.toBeNull();
+
+    const restored = reduce([add, f.markPurchased(add.item_id), f.restore(add.item_id)]);
+    expect(restored.items[add.item_id]!.done_at).toBeNull();
+  });
+
+  it("auto-archives a done item once it passes the archive window", () => {
+    const now = 100 * ARCHIVE_AFTER_MS;
+    const add = makeOp({ operation_type: "ADD", item_id: "item-1", operation_id: "op-add", logical_version: 1,
+      payload: { catalog_item_id: null, name: "Milk", for_member_id: null, quantity: 1, unit: "litre" } });
+    const doneLongAgo = makeOp({ operation_type: "SET_STATUS", item_id: "item-1", operation_id: "op-done", logical_version: 2,
+      created_at: now - ARCHIVE_AFTER_MS - 1, payload: { status: "purchased" } });
+
+    const state = reduce([add, doneLongAgo]);
+    expect(selectPurchased(state)).toHaveLength(1); // still in the log
+    expect(selectDone(state, now)).toHaveLength(0); // but archived out of the Done list
+  });
+
+  it("keeps a recently done item in the Done list", () => {
+    const now = 100 * ARCHIVE_AFTER_MS;
+    const add = makeOp({ operation_type: "ADD", item_id: "item-1", operation_id: "op-add", logical_version: 1,
+      payload: { catalog_item_id: null, name: "Milk", for_member_id: null, quantity: 1, unit: "litre" } });
+    const doneRecently = makeOp({ operation_type: "SET_STATUS", item_id: "item-1", operation_id: "op-done", logical_version: 2,
+      created_at: now - 1000, payload: { status: "purchased" } });
+
+    const state = reduce([add, doneRecently]);
+    expect(selectDone(state, now)).toHaveLength(1);
   });
 
   it("UPDATE changes given fields and leaves others intact", () => {
