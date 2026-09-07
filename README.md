@@ -46,8 +46,11 @@ Sync     = OFF
 
 ## Non-goals
 
-- Cloud synchronization as the primary path, mandatory accounts, advertising/analytics, a
-  permanent server, internet-based multi-family collaboration, or a commercial catalog.
+- **No cloud data backend.** All family data stays on the family's own devices and syncs
+  peer-to-peer. A cloud option (e.g. Drive or a hosted store) is **deferred and will not be
+  added unless the owner explicitly asks for it.**
+- Mandatory accounts, advertising/analytics, a permanent server, internet-based multi-family
+  collaboration, or a commercial catalog.
 
 ## Family, members, and devices
 

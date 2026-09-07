@@ -149,10 +149,12 @@ have globally unique ids.
 After an exchange, devices SHOULD be able to confirm convergence (e.g. compare operation
 counts / a state summary). No single device is privileged in this check.
 
-### R18 — No permanent server
+### R18 — No permanent server, no cloud data backend
 
-No device MAY run a permanent server. Any transient sync service (or relay session) MUST be
-explicitly started and MUST stop after use. Family data MUST stay peer-to-peer / local.
+No device MAY run a permanent server, and the app MUST NOT use a cloud data backend. Family
+data MUST stay peer-to-peer / local; a cloud option is deferred and MUST NOT be added unless
+the owner explicitly requests it. Any transient sync/relay session MUST be explicitly started
+and MUST stop after use.
 
 ### R29 — Data classes in sync
 

@@ -10,7 +10,8 @@ To-do, …) that store data on each phone and reconcile peer-to-peer over the lo
 3. **Peer synchronization (mesh)** — any device exchanges changes directly with any other
    family device; there is no fixed coordinator/owner and no host.
 4. **No cloud dependency** — GitHub Pages distributes code only; family data never leaves
-   the devices (any relay used for discovery carries signalling, not data).
+   the devices. There is **no cloud data backend**, and one is deferred unless the owner
+   explicitly requests it (any future relay would carry sync *signalling* only, never data).
 5. **Modules over monolith** — features are modules behind one home screen; a module owns
    its screens and its permission model.
 
