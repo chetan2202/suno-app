@@ -172,7 +172,9 @@ export function renderMenu(ctx: ViewCtx): HTMLElement {
     householdCard(ctx),
     inviteSection(ctx),
     syncSection(ctx),
-    cloudSection(ctx),
+    // Cloud sync (Google Drive) is parked until an OAuth client id is configured; the
+    // backend decision is still open. Hidden entirely while unconfigured.
+    ctx.cloud.configured && cloudSection(ctx),
     ...adminSections(ctx),
     el("button", { class: "btn danger full", text: "Leave & reset household", onClick: () => {
       if (confirm("Leave this household on this device? Your local list stays until you set up again.")) {
