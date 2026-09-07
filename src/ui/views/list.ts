@@ -27,13 +27,13 @@ function neededRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
       el("button", { class: "step", text: "−", "aria-label": "Decrease", onClick: () => void ctx.actions.setQuantity(item.item_id, Math.max(1, item.quantity - 1)) }),
       el("span", { class: "qty-label", text: `${item.quantity} ${item.unit}` }),
       el("button", { class: "step", text: "+", "aria-label": "Increase", onClick: () => void ctx.actions.setQuantity(item.item_id, item.quantity + 1) }),
-      el("button", { class: "icon-btn ok", text: "✓", "aria-label": "Bought", onClick: () => void ctx.actions.togglePurchased(item) }),
+      el("button", { class: "icon-btn ok", text: "✓", "aria-label": "Mark done", onClick: () => void ctx.actions.togglePurchased(item) }),
       el("button", { class: "icon-btn danger", text: "🗑", "aria-label": "Delete", onClick: () => void ctx.actions.deleteItem(item.item_id) }),
     ]),
   ]);
 }
 
-function purchasedRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
+function doneRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
   return el("li", { class: "row done" }, [
     el("span", { class: "row-icon", text: iconFor(item) }),
     el("div", { class: "row-main" }, [
@@ -50,9 +50,9 @@ function purchasedRow(ctx: ViewCtx, item: GroceryItem): HTMLElement {
 
 export function renderList(ctx: ViewCtx): HTMLElement {
   const needed = selectNeeded(ctx.groceryState).sort((a, b) => a.name.localeCompare(b.name));
-  const purchased = selectPurchased(ctx.groceryState).sort((a, b) => a.name.localeCompare(b.name));
+  const done = selectPurchased(ctx.groceryState).sort((a, b) => a.name.localeCompare(b.name));
 
-  if (needed.length === 0 && purchased.length === 0) {
+  if (needed.length === 0 && done.length === 0) {
     return el("section", { class: "view" }, [
       el("div", { class: "empty-state" }, [
         el("span", { class: "empty-emoji", text: "🧾" }),
@@ -67,7 +67,7 @@ export function renderList(ctx: ViewCtx): HTMLElement {
     needed.length === 0
       ? el("p", { class: "empty", text: "Nothing needed right now." })
       : el("ul", { class: "list" }, needed.map((i) => neededRow(ctx, i))),
-    purchased.length > 0 && el("h2", { class: "section-title", text: `In the cart (${purchased.length})` }),
-    purchased.length > 0 && el("ul", { class: "list" }, purchased.map((i) => purchasedRow(ctx, i))),
+    done.length > 0 && el("h2", { class: "section-title", text: `Done (${done.length})` }),
+    done.length > 0 && el("ul", { class: "list" }, done.map((i) => doneRow(ctx, i))),
   ]);
 }
