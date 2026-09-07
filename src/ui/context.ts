@@ -3,9 +3,10 @@
 // state.
 
 import type { App } from "../storage/index.js";
-import type { GroceryItem, MasterCatalog, MasterCategory, Member } from "../domain/types.js";
+import type { GroceryItem, MasterCatalog, MasterCategory, Member, TodoTask } from "../domain/types.js";
 import type { GroceryState } from "../domain/reducer.js";
-import type { AddPayload } from "../domain/payloads.js";
+import type { TodoState } from "../domain/reducer-todo.js";
+import type { AddPayload, TodoAddPayload } from "../domain/payloads.js";
 import type { CatalogCustomization, HouseholdSettings } from "../domain/catalog.js";
 import type { CloudSyncView } from "../sync/cloud-sync.js";
 
@@ -58,6 +59,16 @@ export interface Actions {
   togglePurchased(item: GroceryItem): Promise<void>;
   deleteItem(itemId: string): Promise<void>;
 
+  // to-do
+  identifyMember(memberId: string): Promise<void>;
+  addSelfMember(name: string): Promise<void>;
+  openTodoAdd(): void;
+  closeTodoAdd(): void;
+  addTask(input: TodoAddPayload): Promise<void>;
+  setTaskDone(task: TodoTask, done: boolean): Promise<void>;
+  respondTask(taskId: string, response: "accepted" | "rejected"): Promise<void>;
+  deleteTask(taskId: string): Promise<void>;
+
   // catalog admin
   toggleItemRemoved(itemId: string, removed: boolean): Promise<void>;
   toggleCategoryRemoved(categoryId: string, removed: boolean): Promise<void>;
@@ -96,6 +107,8 @@ export interface ViewCtx {
   browseCategoryId: string | null;
   addSheetItem: { id: string; name: string; unit: string; categoryId: string } | null;
   onboardingStep: 1 | 2;
+  todoState: TodoState;
+  todoAddOpen: boolean;
   sync: SyncView;
   cloud: CloudSyncView;
 

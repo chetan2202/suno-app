@@ -4,11 +4,12 @@
 import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
 import { categoryIcon, itemIcon } from "../../domain/icons.js";
+import { icon, type IconName } from "../icon.js";
 
 function categoryGrid(ctx: ViewCtx): HTMLElement {
   const tiles = ctx.resolved.map((c) =>
     el("button", { class: "tile", onClick: () => ctx.actions.selectCategory(c.id) }, [
-      el("span", { class: "tile-icon", text: categoryIcon(c.id) }),
+      el("span", { class: "tile-icon" }, [icon(categoryIcon(c.id) as IconName, 28)]),
       el("span", { class: "tile-name", text: c.name }),
     ]),
   );
@@ -29,17 +30,18 @@ function productGrid(ctx: ViewCtx, categoryId: string): HTMLElement {
         class: "tile",
         onClick: () => ctx.actions.openAddSheet({ id: item.id, name: item.name, unit: item.unit, categoryId }),
       }, [
-        el("span", { class: "tile-icon", text: itemIcon(item.id, categoryId) }),
+        el("span", { class: "tile-icon" }, [icon(itemIcon(item.id, categoryId) as IconName, 28)]),
         el("span", { class: "tile-name", text: item.name }),
-        el("span", { class: "tile-add", text: "+ Add" }),
+        el("span", { class: "tile-add", text: "Add" }),
       ]),
     ),
   );
 
   return el("section", { class: "view" }, [
     el("div", { class: "screen-head" }, [
-      el("button", { class: "icon-btn", text: "‹", "aria-label": "Back", onClick: () => ctx.actions.selectCategory(null) }),
-      el("h2", { class: "screen-title", text: `${categoryIcon(categoryId)} ${category.name}` }),
+      el("button", { class: "icon-btn", "aria-label": "Back", onClick: () => ctx.actions.selectCategory(null) }, [icon("back", 22)]),
+      el("span", { class: "screen-head-icon" }, [icon(categoryIcon(categoryId) as IconName, 24)]),
+      el("h2", { class: "screen-title", text: category.name }),
     ]),
     el("div", { class: "grid" }, tiles),
   ]);
@@ -67,15 +69,15 @@ export function renderAddSheet(ctx: ViewCtx): HTMLElement | null {
   };
 
   const qtyLabel = el("span", { class: "qty-label", text: `1 ${item.unit}` });
-  const dec = el("button", { class: "step", text: "−", onClick: () => { quantity = Math.max(1, quantity - 1); qtyLabel.textContent = `${quantity} ${item.unit}`; } });
-  const inc = el("button", { class: "step", text: "+", onClick: () => { quantity += 1; qtyLabel.textContent = `${quantity} ${item.unit}`; } });
+  const dec = el("button", { class: "step", "aria-label": "Decrease", onClick: () => { quantity = Math.max(1, quantity - 1); qtyLabel.textContent = `${quantity} ${item.unit}`; } }, [icon("minus", 18)]);
+  const inc = el("button", { class: "step", "aria-label": "Increase", onClick: () => { quantity += 1; qtyLabel.textContent = `${quantity} ${item.unit}`; } }, [icon("plus", 18)]);
 
   const chips = [chip(null, "Shared"), ...ctx.members.map((m) => chip(m.member_id, m.display_name))];
 
   const sheet = el("div", { class: "sheet" }, [
     el("div", { class: "sheet-grab" }),
     el("div", { class: "sheet-title" }, [
-      el("span", { class: "row-icon", text: itemIcon(item.id, item.categoryId) }),
+      el("span", { class: "row-icon" }, [icon(itemIcon(item.id, item.categoryId) as IconName, 22)]),
       el("span", { text: item.name }),
     ]),
     el("span", { class: "field-label", text: "For whom?" }),

@@ -5,6 +5,7 @@
 import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
 import { canScan } from "../qr.js";
+import { icon } from "../icon.js";
 
 async function scanOnce(video: HTMLVideoElement, onCode: (code: string) => void, onError: () => void): Promise<() => void> {
   let stream: MediaStream | null = null;
@@ -66,7 +67,7 @@ export function renderJoin(ctx: ViewCtx): HTMLElement {
 
   return el("div", { class: "sheet-screen" }, [
     el("div", { class: "screen-head" }, [
-      el("button", { class: "icon-btn", text: "‹", "aria-label": "Back", onClick: () => ctx.actions.resetHousehold() }),
+      el("button", { class: "icon-btn", "aria-label": "Back", onClick: () => ctx.actions.resetHousehold() }, [icon("back", 22)]),
       el("h1", { class: "screen-title", text: "Join a household" }),
     ]),
     scanArea,

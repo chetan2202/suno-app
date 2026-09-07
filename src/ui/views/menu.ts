@@ -7,6 +7,12 @@ import { encodeInvite } from "../../domain/invite.js";
 import { qrImage } from "../qr.js";
 import { renderCatalogEditor } from "./catalog-editor.js";
 import { renderMembers } from "./members.js";
+import { icon, type IconName } from "../icon.js";
+
+/** A <summary> with a leading flat icon and a label. */
+function summaryLabel(name: IconName, text: string): HTMLElement {
+  return el("summary", {}, [icon(name, 20), el("span", { class: "summary-text", text })]);
+}
 
 // A collapsible menu section whose open/closed state survives re-renders: the key is
 // remembered in the controller (ctx.openSections) and re-applied here, and a user toggle
@@ -53,7 +59,7 @@ function inviteSection(ctx: ViewCtx): HTMLElement | false {
   const codeBox = el("textarea", { class: "field code-input", value: code }) as HTMLTextAreaElement;
   codeBox.readOnly = true;
   return section(ctx, "invite", [
-    el("summary", { text: "👨‍👩‍👧 Invite family" }),
+    summaryLabel("users", "Invite family"),
     el("p", { class: "hint", text: "Have the family member open Suno → Join a household, then scan this or paste the code." }),
     el("div", { class: "qr-wrap" }, [qrImage(code)]),
     codeBox,
@@ -96,7 +102,7 @@ function syncSection(ctx: ViewCtx): HTMLElement {
   }
 
   return section(ctx, "sync", [
-    el("summary", { text: "🔁 Sync over Wi-Fi" }),
+    summaryLabel("sync", "Sync over Wi-Fi"),
     el("p", { class: "hint", text: "Both devices must be on the same Wi-Fi. The admin hosts and can stop it anytime." }),
     ...children,
   ]);
@@ -125,7 +131,7 @@ function timeAgo(ts: number): string {
 function cloudSection(ctx: ViewCtx): HTMLElement {
   const c = ctx.cloud;
   const children: (HTMLElement | false)[] = [
-    el("summary", { text: "☁️ Cloud sync (Google Drive)" }),
+    summaryLabel("sync", "Cloud sync (Google Drive)"),
     el("p", { class: "hint", text: "Everyone signs into the same household Google account. Lists sync automatically, no Wi-Fi pairing." }),
   ];
 
@@ -157,11 +163,11 @@ function adminSections(ctx: ViewCtx): (HTMLElement | false)[] {
   if (ctx.settings.role !== "admin") return [];
   return [
     section(ctx, "catalog", [
-      el("summary", { text: "🧺 Catalog & profile" }),
+      summaryLabel("grid", "Catalog & profile"),
       renderCatalogEditor(ctx),
     ]),
     section(ctx, "members", [
-      el("summary", { text: "👤 Members" }),
+      summaryLabel("user", "Members"),
       renderMembers(ctx),
     ]),
   ];
@@ -187,7 +193,7 @@ export function renderMenu(ctx: ViewCtx): HTMLElement {
   return el("div", { class: "menu-screen" }, [
     el("div", { class: "menu-head" }, [
       el("h1", { class: "screen-title", text: "Menu" }),
-      el("button", { class: "icon-btn", text: "✕", "aria-label": "Close", onClick: () => ctx.actions.closeMenu() }),
+      el("button", { class: "icon-btn", "aria-label": "Close", onClick: () => ctx.actions.closeMenu() }, [icon("close", 22)]),
     ]),
     ...sections.filter((c): c is HTMLElement => c !== false),
   ]);

@@ -15,15 +15,16 @@ import { renderOnboarding } from "./views/onboarding.js";
 import { renderHome } from "./views/home.js";
 import { renderList } from "./views/list.js";
 import { renderBrowse, renderAddSheet } from "./views/browse.js";
-import { renderTodo } from "./views/todo.js";
+import { renderTodo, renderTodoAddSheet } from "./views/todo.js";
 import { renderMenu } from "./views/menu.js";
+import { icon, type IconName } from "./icon.js";
 import { updateBanner } from "./views/update.js";
 
 const SYNC_TEXT: Record<SyncStatus, string> = {
   idle: "Not connected.",
   waiting: "Waiting for the other device…",
   connected: "Connected. Exchanging lists…",
-  synced: "Synced ✓",
+  synced: "Synced",
   closed: "Disconnected.",
 };
 
@@ -36,6 +37,7 @@ export class AppController {
   private browseCategoryId: string | null = null;
   private addSheetItem: ViewCtx["addSheetItem"] = null;
   private onboardingStep: 1 | 2 = 1;
+  private todoAddOpen = false;
   private updateApply: (() => void) | null = null;
 
   private session: WebRtcSession | null = null;
@@ -119,6 +121,15 @@ export class AppController {
       this.render();
     },
     deleteItem: async (id) => { await this.app.grocery.deleteItem(id); this.render(); },
+
+    identifyMember: async (memberId) => { await this.app.household.setMyMember(memberId); this.render(); },
+    addSelfMember: async (name) => { const m = await this.app.household.addMember(name); await this.app.household.setMyMember(m.member_id); this.render(); },
+    openTodoAdd: () => { this.todoAddOpen = true; this.render(); },
+    closeTodoAdd: () => { this.todoAddOpen = false; this.render(); },
+    addTask: async (input) => { await this.app.todo.addTask(input); this.todoAddOpen = false; this.render(); },
+    setTaskDone: async (task, done) => { await this.app.todo.setStatus(task.task_id, done ? "done" : "open"); this.render(); },
+    respondTask: async (id, response) => { await this.app.todo.respond(id, response); this.render(); },
+    deleteTask: async (id) => { await this.app.todo.deleteTask(id); this.render(); },
 
     toggleItemRemoved: async (id, removed) => { await this.app.household.setItemRemoved(id, removed); this.render(); },
     toggleCategoryRemoved: async (id, removed) => { await this.app.household.setCategoryRemoved(id, removed); this.render(); },
@@ -208,6 +219,8 @@ export class AppController {
       addSheetItem: this.addSheetItem,
       onboardingStep: this.onboardingStep,
       module: this.module,
+      todoState: this.app.todo.getState(),
+      todoAddOpen: this.todoAddOpen,
       sync: this.sync,
       cloud: this.cloud.getView(),
       actions: this.actions,
@@ -234,6 +247,8 @@ export class AppController {
       if (sheet) this.root.append(sheet);
     } else {
       this.root.append(renderTodo(ctx));
+      const todoSheet = renderTodoAddSheet(ctx);
+      if (todoSheet) this.root.append(todoSheet);
     }
     if (this.menuOpen) this.root.append(renderMenu(ctx));
   }
@@ -247,8 +262,8 @@ export class AppController {
     const onHome = this.module === "home";
     // On home the left button opens the family menu; inside a module it returns home.
     const leftBtn = onHome
-      ? el("button", { class: "icon-btn light", text: "☰", "aria-label": "Menu", onClick: () => this.actions.openMenu() })
-      : el("button", { class: "icon-btn light", text: "‹", "aria-label": "Home", onClick: () => this.actions.goHome() });
+      ? el("button", { class: "icon-btn light", "aria-label": "Menu", onClick: () => this.actions.openMenu() }, [icon("menu", 22)])
+      : el("button", { class: "icon-btn light", "aria-label": "Home", onClick: () => this.actions.goHome() }, [icon("back", 22)]);
     const subtitle = this.module === "home" ? ctx.settings.household_name : AppController.MODULE_NAMES[this.module];
     const header = el("header", { class: "app-bar" }, [
       leftBtn,
@@ -271,14 +286,14 @@ export class AppController {
   }
 
   private bottomNav(ctx: ViewCtx): HTMLElement {
-    const item = (tab: Tab, icon: string, label: string) =>
+    const navItem = (tab: Tab, name: IconName, label: string) =>
       el("button", { class: `nav-item ${this.tab === tab ? "nav-active" : ""}`, onClick: () => ctx.actions.setTab(tab) }, [
-        el("span", { class: "nav-icon", text: icon }),
+        el("span", { class: "nav-icon" }, [icon(name, 24)]),
         el("span", { class: "nav-label", text: label }),
       ]);
     return el("nav", { class: "bottom-nav" }, [
-      item("list", "🧾", "List"),
-      item("browse", "🛒", "Browse"),
+      navItem("list", "checklist", "List"),
+      navItem("browse", "cart", "Browse"),
     ]);
   }
 }

@@ -183,6 +183,48 @@ textarea.field { min-height: 3rem; resize: vertical; }
 .tile-name { font-size: 0.78rem; font-weight: 600; }
 .tile-add { font-size: 0.72rem; font-weight: 700; color: var(--brand-2); }
 
+/* ---------- Icons ---------- */
+.icon { display: block; flex: none; }
+.icon-btn, .step, .nav-item { display: inline-flex; align-items: center; justify-content: center; }
+.screen-head-icon { display: inline-flex; color: var(--brand); }
+.summary-text { flex: 1; }
+.menu-section summary { display: flex; align-items: center; gap: 0.6rem; }
+
+/* ---------- To-do ---------- */
+.task { display: flex; align-items: center; gap: 0.7rem; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem 0.7rem; box-shadow: var(--shadow); }
+.task.done .task-title { text-decoration: line-through; color: var(--muted); }
+.task-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.task-title { font-weight: 600; }
+.task-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; color: var(--muted); font-size: 0.74rem; }
+.task-due { display: inline-flex; align-items: center; gap: 0.25rem; }
+.task-due.overdue { color: var(--danger); }
+.task-flag { display: inline-flex; align-items: center; gap: 0.2rem; color: var(--danger); }
+.task-from { font-style: italic; }
+.task-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); background: transparent; color: #fff; flex: none; }
+.task-check.checked { background: var(--brand); border-color: var(--brand); }
+.task-actions { display: flex; gap: 0.4rem; }
+.btn.sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+.chip-status { font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 999px; white-space: nowrap; }
+.chip-status.s-pending { background: var(--brand-soft); color: var(--brand-2); }
+.chip-status.s-accepted { background: var(--brand); color: #fff; }
+.chip-status.s-rejected { background: rgba(194, 59, 38, 0.14); color: var(--danger); }
+.chip-status.s-done { background: var(--border); color: var(--muted); }
+.time-input { color-scheme: light dark; max-width: 10rem; }
+.due-preview { margin: 0.1rem 0 0.4rem; }
+.day-row { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.3rem; -webkit-overflow-scrolling: touch; }
+.day-chip { flex: none; display: flex; flex-direction: column; align-items: center; gap: 0.1rem; width: 3.1rem; padding: 0.5rem 0; border: 1px solid var(--border); border-radius: 12px; background: var(--card); color: var(--fg); }
+.day-chip:active { transform: scale(0.96); }
+.day-chip.day-active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.day-dow { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.8; }
+.day-num { font-size: 1.05rem; font-weight: 700; }
+.identify { display: flex; flex-direction: column; gap: 0.6rem; max-width: 26rem; margin: 0 auto; }
+.identify .or { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 0.3rem 0 0; }
+.identify-add { display: flex; gap: 0.5rem; }
+
+/* Floating action button */
+.fab { position: fixed; right: 1.1rem; bottom: 1.3rem; width: 3.4rem; height: 3.4rem; border-radius: 50%; background: var(--brand); color: #fff; border: none; box-shadow: var(--shadow-lg); display: flex; align-items: center; justify-content: center; z-index: 15; }
+.fab:active { transform: scale(0.95); }
+
 /* ---------- Home module tiles ---------- */
 .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.8rem; }
 .home-tile {

@@ -3,10 +3,11 @@
 
 import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
+import { icon, type IconName } from "../icon.js";
 
-function choice(icon: string, title: string, desc: string, onClick: () => void): HTMLElement {
+function choice(name: IconName, title: string, desc: string, onClick: () => void): HTMLElement {
   return el("button", { class: "role-card", onClick }, [
-    el("span", { class: "role-icon", text: icon }),
+    el("span", { class: "role-icon" }, [icon(name, 26)]),
     el("span", { class: "role-title", text: title }),
     el("span", { class: "role-desc", text: desc }),
   ]);
@@ -15,14 +16,14 @@ function choice(icon: string, title: string, desc: string, onClick: () => void):
 export function renderWelcome(ctx: ViewCtx): HTMLElement {
   return el("div", { class: "welcome" }, [
     el("div", { class: "brand" }, [
-      el("span", { class: "brand-mark", text: "🛒" }),
+      el("span", { class: "brand-mark" }, [icon("users", 40)]),
       el("h1", { class: "brand-name", text: "Suno" }),
-      el("p", { class: "brand-tag", text: "Your family's shared grocery list" }),
+      el("p", { class: "brand-tag", text: "Your family, in sync" }),
     ]),
-    choice("👑", "Start a household", "You become the admin — set up the list and invite family.", () =>
+    choice("home", "Start a household", "You become the admin — set up the list and invite family.", () =>
       ctx.actions.chooseAdmin(),
     ),
-    choice("📲", "Join a household", "Scan or paste the invite your family admin shares.", () =>
+    choice("qr", "Join a household", "Scan or paste the invite your family admin shares.", () =>
       ctx.actions.chooseMember(),
     ),
     el("p", { class: "welcome-note", text: "One device joins one household at a time." }),
