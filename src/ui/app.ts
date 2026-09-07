@@ -183,11 +183,13 @@ export class AppController {
   private newSession(): WebRtcSession {
     this.syncStopInternal();
     const session = new WebRtcSession();
-    const service = new SyncService(
-      this.app.grocery,
-      (status) => { this.sync.status = SYNC_TEXT[status]; this.render(); },
-      () => this.render(),
-    );
+    const service = new SyncService({
+      getOperations: () => this.app.grocery.getOperations(),
+      myMemberId: () => this.app.household.getSettings().my_member_id,
+      ingest: async (ops) => { await this.app.grocery.ingestOperations(ops); this.app.todo.refresh(); },
+      onStatus: (status) => { this.sync.status = SYNC_TEXT[status]; this.render(); },
+      onChange: () => this.render(),
+    });
     service.attach(session);
     this.session = session;
     return session;
