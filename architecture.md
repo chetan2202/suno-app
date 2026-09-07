@@ -1,659 +1,251 @@
 # Architecture
 
-## 1. Architectural principles
+Suno is a **local-first family super-app**: a static PWA made of modules (Grocery,
+To-do, …) that store data on each phone and reconcile peer-to-peer over the local network.
 
-The application follows five primary principles:
+## 1. Principles
 
 1. **Local first** — local storage is the primary source of user state.
-2. **Offline first** — the application must remain useful without Internet access.
-3. **Peer synchronization** — devices exchange changes directly over the local network.
-4. **Temporary coordinator** — one device temporarily coordinates synchronization.
-5. **No cloud dependency** — GitHub Pages distributes application code but does not store household data.
+2. **Offline first** — every module remains useful with no Internet.
+3. **Peer synchronization (mesh)** — any device exchanges changes directly with any other
+   family device; there is no fixed coordinator/owner and no host.
+4. **No cloud dependency** — GitHub Pages distributes code only; family data never leaves
+   the devices (any relay used for discovery carries signalling, not data).
+5. **Modules over monolith** — features are modules behind one home screen; a module owns
+   its screens and its permission model.
 
-The central architectural rule is:
+Central rule:
 
-> The network is an occasional synchronization mechanism, not a dependency of the application.
+> The network is an occasional synchronization mechanism, not a dependency of the app.
 
----
-
-## 2. Logical architecture
-
-```text
-+-------------------------------------------------------------+
-|                        GitHub Pages                         |
-|                                                             |
-|  Static PWA: HTML + CSS + JS + Manifest + Service Worker   |
-|  Base grocery catalog                                      |
-+-------------------------------+-----------------------------+
-                                |
-                                | HTTPS / application delivery
-                                v
-+-------------------------------------------------------------+
-|                         Each Phone                         |
-|                                                             |
-|  +-----------------------+                                  |
-|  | PWA UI                |                                  |
-|  +-----------+-----------+                                  |
-|              |                                              |
-|  +-----------v-----------+                                  |
-|  | Application State     |                                  |
-|  +-----------+-----------+                                  |
-|              |                                              |
-|  +-----------v-----------+                                  |
-|  | IndexedDB             |                                  |
-|  | - household           |                                  |
-|  | - identity            |                                  |
-|  | - members             |                                  |
-|  | - catalog             |                                  |
-|  | - grocery items       |                                  |
-|  | - operation log       |                                  |
-|  +-----------------------+                                  |
-|                                                             |
-|  Optional native Android networking layer                  |
-+-------------------------------------------------------------+
-```
-
----
-
-## 3. Data ownership
-
-There is no central database.
-
-Every device owns a local database.
+## 2. Super-app structure
 
 ```text
-Phone A
-  └── Local state
-
-Phone B
-  └── Local state
-
-Phone C
-  └── Local state
+Home (module tiles)
+  ├── Grocery   — shared household list; admin curates, members request
+  ├── To-do     — per-member private lists + delegation; flat peer-to-peer
+  └── (future modules)
 ```
 
-During synchronization, devices exchange changes until they converge on the same household state.
+- A **module** is a self-contained feature: its own domain rules, UI screens, and (where it
+  needs one) its own role model. Grocery keeps a light **admin/member** split; To-do is
+  **flat — no admin**.
+- All modules share the same substrate: the family/identity model, the operation log, local
+  persistence, and the sync transport.
 
-The owner phone is a **coordinator**, not the permanent owner of everybody's data.
+## 3. Layers
 
----
+- **Layer 1 — Presentation.** Home shell + per-module UI (grocery list/browse, to-do lists,
+  add flows), family setup, sync status. Vanilla TypeScript, no framework; the UI does not
+  touch persistence or transport directly.
+- **Layer 2 — Domain.** Pure, browser-free, testable: item/task rules, roles, operation
+  generation, the deterministic merge/reducer, and helpers such as natural-language
+  date/time parsing.
+- **Layer 3 — Local persistence.** IndexedDB behind a repository API: operation log, local
+  identity/device id, family settings, members, module state. Additive migrations.
+- **Layer 4 — Synchronization.** Peer-to-peer operation exchange + merge, behind a transport
+  interface. Independent of the UI.
+- **Layer 5 — Platform adapter.** Optional native capabilities the browser lacks (LAN
+  discovery, a local listening socket, background service), isolated so the core stays
+  web-based.
 
-## 4. Application layers
+## 4. Data ownership
 
-### Layer 1 — Presentation
-
-Responsible for:
-
-- grocery list
-- add/edit item UI
-- household setup
-- member management
-- sync status
-- settings
-
-Possible technology:
-
-- vanilla TypeScript
-- React
-- another lightweight web UI framework
-
-The framework choice SHOULD remain independent of the synchronization model.
-
-### Layer 2 — Domain
-
-Responsible for:
-
-- grocery item rules
-- household rules
-- member roles
-- ownership
-- merge rules
-- operation generation
-
-This layer SHOULD contain most business logic and SHOULD be testable without a browser.
-
-### Layer 3 — Local persistence
-
-Responsible for:
-
-- IndexedDB
-- database migrations
-- operation log
-- local identities
-- local household state
-
-The persistence layer SHOULD expose a clean repository API to the domain layer.
-
-### Layer 4 — Synchronization
-
-Responsible for:
-
-- discovery
-- authentication
-- connection establishment
-- operation exchange
-- merge
-- distribution
-- verification
-
-The synchronization layer SHOULD NOT depend on the UI.
-
-### Layer 5 — Platform adapter
-
-Responsible for capabilities that normal browser APIs cannot reliably provide.
-
-Potential Android responsibilities:
-
-- local HTTP/TCP server
-- Wi-Fi/network discovery
-- background service
-- secure local networking
-- integration with WebView/PWA
-
-This layer is intentionally isolated so the core application remains web-based.
-
----
+There is no central database. Every device owns a local database and its own slice of the
+operation log. During sync, devices exchange operations until they converge. No device is
+the permanent owner of anyone else's data.
 
 ## 5. Data model
 
-### Household
+### Family (household)
 
 ```text
-Household
----------
-household_id
-name
-owner_identity_id
-created_at
-version
-```
-
-### Identity
-
-```text
-Identity
---------
-identity_id
-display_name
-role
-public_key
-created_at
-```
-
-### Device
-
-```text
-Device
+Family
 ------
-device_id
-identity_id
-device_name
-public_key
-last_seen
-status
+family_id
+name
+created_at
 ```
 
-A member may eventually have more than one device.
+### Identity / member and device
 
-### Grocery item
+```text
+Member                         Device (local identity)
+------                         ----------------------
+member_id                      device_id      generated once per install
+display_name                   member_id      the person this device belongs to
+role (per module; grocery)     public_key     where cryptographic identity is used
+created_at
+```
 
-Initial conceptual model:
+A member is a real person on their own device; a member may eventually have more than one
+device.
+
+### Grocery item (shared family data)
 
 ```text
 GroceryItem
 -----------
-item_id
-catalog_item_id
-name
-quantity
-unit
-status
-created_by
-created_at
-updated_at
+item_id, catalog_item_id, name, for_member_id (nullable = shared),
+quantity, unit, status (needed | purchased), done_at (nullable),
+created_by (device_id), created_at, updated_at
 ```
 
-### Catalog item
+### To-do task (private, or targeted when delegated)
 
 ```text
-CatalogItem
------------
-catalog_item_id
-name
-default_unit
-category
-source
+TodoTask
+--------
+task_id
+owner_member_id       whose list it belongs to
+title
+due_at                nullable epoch; parsed from text, editable
+priority              optional
+status                open | done
+delegated_to          member_id, or null for a personal task
+delegation_status     null | pending | accepted | rejected   (set when delegated)
+created_by            device_id
+created_at, updated_at
 ```
 
-`source` can distinguish:
+Personal tasks (`delegated_to = null`) never leave the device. A delegated task is shared
+only with the delegator and the assignee.
 
-```text
-BASE
-HOUSEHOLD
-```
-
-### Operation
+### Operation (append-only log)
 
 ```text
 Operation
 ---------
-operation_id
-device_id
-sequence
-item_id
-operation_type
-payload
-logical_version
-created_at
+operation_id (globally unique), device_id, sequence (per-device),
+target_id (item/task), operation_type, payload, logical_version, created_at
 ```
 
-Example:
+Operation types cover both modules (grocery: ADD/UPDATE/SET_QUANTITY/SET_STATUS/DELETE/
+RESTORE; to-do adds delegation/response/due operations). Family settings, members, and
+catalog customization are currently local config records; folding them into the log is a
+later refinement.
+
+## 6. Why an operation log
+
+Copying whole databases overwrites concurrent edits. Instead each device appends operations;
+during sync each side sends the operations the other lacks, and both fold the union through a
+deterministic reducer:
+
+- **Idempotent** — dedup by `operation_id`; applying the same op twice is a no-op.
+- **Commutative / order-independent** — a total order by `(logical_version, device_id,
+  sequence)` means any exchange order converges to the same state.
+- **Conflict policy (R15)** — last-write-wins by logical version; DELETE is terminal.
+
+This is what makes **mesh** sync safe: A↔B then B↔C propagates A's changes to C transitively,
+in any order.
+
+## 7. Synchronization (peer-to-peer mesh)
+
+No owner-coordinator. Any device can sync with any peer:
 
 ```text
-operation_id = 01J...
-device_id    = D-ABC
-sequence     = 184
-item_id      = ITEM-MILK
-operation    = ADD
-payload      = { quantity: 2, unit: "litre" }
+1. Connect        two family devices establish a channel (see §8)
+2. Authenticate   each proves family membership (S1/S4)
+3. Exchange       each sends the operations the other lacks
+4. Merge          both fold the union deterministically (idempotent)
+5. Confirm        compare op counts / a state summary to confirm convergence
 ```
 
----
-
-## 6. Why an operation log?
-
-A naive synchronization implementation would copy the complete database:
-
-```text
-Phone A database
-       |
-       v
-Phone B database
-```
-
-That creates overwrite problems.
-
-Instead:
-
-```text
-Phone A
-  |
-  +-- operation 101
-  +-- operation 102
-  +-- operation 103
-
-Phone B
-  |
-  +-- operation 201
-  +-- operation 202
-```
-
-During synchronization:
-
-```text
-A asks B:
-"Which operations do you have that I don't?"
-
-B sends missing operations.
-
-B asks A:
-"Which operations do you have that I don't?"
-
-A sends missing operations.
-
-Both apply operations deterministically.
-```
-
-This makes synchronization incremental and idempotent.
-
----
-
-## 7. Synchronization protocol
-
-### Phase 1 — Start
-
-Owner presses:
-
-```text
-SYNC HOUSEHOLD
-```
-
-The coordinator starts its temporary local service.
-
-### Phase 2 — Discovery
-
-The coordinator searches the local Wi-Fi network for household peers.
-
-Discovery must identify:
-
-- device ID
-- household ID
-- protocol version
-- network endpoint
-
-Unknown devices are ignored or rejected.
-
-### Phase 3 — Authentication
-
-The devices prove household membership.
-
-Conceptually:
-
-```text
-Coordinator
-    |
-    | challenge
-    v
-Peer
-    |
-    | signed response
-    v
-Coordinator
-```
-
-The exact cryptographic protocol should be selected during implementation.
-
-### Phase 4 — Capability/version negotiation
-
-Peers exchange:
-
-- protocol version
-- application version
-- supported features
-
-This protects future versions from blindly exchanging incompatible data.
-
-### Phase 5 — Operation exchange
-
-The coordinator requests operations it does not have.
-
-Peers respond with missing operations.
-
-The coordinator then sends its missing operations to each peer.
-
-### Phase 6 — Merge
-
-All received operations are validated and applied.
-
-The merge function MUST be deterministic.
-
-### Phase 7 — Distribution
-
-The coordinator sends the required operations/state updates to peers.
-
-Each peer applies them idempotently.
-
-### Phase 8 — Verification
-
-Each peer reports a synchronization summary, such as:
-
-```text
-household_id
-operation_count
-highest_sequence_by_device
-state_hash
-```
-
-The coordinator checks that peers have converged.
-
-### Phase 9 — Shutdown
-
-After successful synchronization:
-
-```text
-Stop local sync service
-```
-
-The device returns to normal offline operation.
-
----
-
-## 8. Conflict model
-
-Conflict handling should be deliberately simple in V1.
-
-Possible operations:
-
-```text
-ADD
-UPDATE
-SET_QUANTITY
-SET_STATUS
-DELETE
-RESTORE
-```
-
-Each operation receives a deterministic ordering/version.
-
-The initial implementation SHOULD avoid pretending to solve every distributed-systems problem.
-
-For example, if two devices independently edit the quantity of the same item, the system needs an explicit policy.
-
-Possible V1 policy:
-
-- use deterministic last-write-wins based on a logical version
-- retain the operation history
-- optionally surface conflicting edits in the UI
-
-The exact rule should be finalized before implementation.
-
----
-
-## 9. Discovery architecture
-
-Browser-only PWA APIs are not sufficient to guarantee that an Android phone can expose a local listening server and participate in automatic network discovery.
-
-Therefore the architecture should isolate discovery/server functionality behind an interface:
+Run pairwise across devices, in any order, the whole family converges. A transient session
+or relay connection is started only for the exchange and then dropped (R18).
+
+### Data classes in sync (§R29)
+
+- **Shared** (grocery list, family catalog): every operation replicates to all family
+  devices.
+- **Private / targeted** (to-do): personal-task operations are never transmitted; a
+  delegated task's operations are sent only to the delegator and assignee. The sync layer
+  therefore filters which operations a peer is entitled to receive — it does not ship the
+  whole log blindly.
+
+## 8. Transport and discovery
+
+Browser PWAs cannot open a LAN listening socket or discover peers (no mDNS/UDP/broadcast),
+and WebRTC still needs a signalling channel to introduce two devices. So transport sits
+behind an interface the domain never imports:
 
 ```text
 SyncTransport
 -------------
-discoverPeers()
-startServer()
-stopServer()
-connect(peer)
-send(...)
-receive(...)
+discoverPeers()      startSession()      stopSession()
+connect(peer)        send(...)           receive(...)
 ```
 
-The web application depends only on this interface.
+Implementations, lightest to heaviest:
 
-A future Android adapter can implement it using native Android networking.
+- **Manual signalling** — devices exchange offer/answer codes by hand (works today, no
+  infra; poor UX at family scale).
+- **Relay-assisted** — a tiny signalling relay lets devices find each other and exchange
+  WebRTC handshakes automatically; **data still flows peer-to-peer**, the relay only carries
+  signalling/presence. This is the path to "open app, tap sync, they connect".
+- **Native adapter** — an Android wrapper providing real LAN discovery + a local socket.
 
-This avoids locking the application domain to a specific networking technology.
+The desired experience is automatic discovery; the merge (Layer 2/4) is unaffected by which
+transport introduces the peers.
 
----
-
-## 10. PWA and Android relationship
-
-### Initial target
+## 9. Security model
 
 ```text
-GitHub Pages
-     |
-     v
-PWA
-     |
-     +-- Service Worker
-     +-- IndexedDB
-     +-- Web UI
+Internet ──X── (no family data)
+GitHub Pages ──> application code only
+Devices ── local network ──> family peers
 ```
 
-### If native networking is required
+- Same Wi-Fi does not imply membership; membership is an explicit invitation (S1).
+- Each device has a unique identity (S2); sync rejects unauthenticated devices (S4).
+- Preferred identity is public-key based; private keys stay on the device.
+- Private-by-default modules (to-do) never put personal data on the wire (S6).
+- No secrets in the repo (S5).
+
+## 10. Failure scenarios
+
+- **Peer disappears mid-sync** — no data lost; each device keeps its log; a later sync
+  resumes from the logs.
+- **Network drops** — sync stops safely; no partially applied operation corrupts local data.
+- **Duplicate operation** — the operation id prevents double application.
+- **App update** — a new version is served from Pages; the local DB survives via migrations.
+- **Device replacement** — membership is recoverable/transferable via an explicit local flow.
+
+## 11. Repository structure
 
 ```text
-Android application shell
-        |
-        +-- WebView / web application
-        |
-        +-- Native sync service
+suno-app/
+├── public/            icons, base catalog
+├── src/
+│   ├── ui/            home shell + per-module views
+│   ├── domain/        types, operations, reducer, parsers (browser-free)
+│   ├── storage/       IndexedDB repositories, migrations
+│   ├── sync/          transport(s) + operation exchange/merge
+│   └── platform/      native adapter (isolated)
+├── index.html, manifest, service worker
+└── README.md, requirements.md, architecture.md
 ```
 
-The native component should remain small.
+## 12. Implementation status and order
 
-The goal is not to create a traditional Android application with a cloud backend.
-
-It is a web application with a thin platform adapter for capabilities unavailable to the browser.
-
----
-
-## 11. Security model
-
-### Trust boundaries
+Done:
 
 ```text
-Internet
-   X
-   |
-   | no household data
-   |
-GitHub Pages
-   |
-   | application code only
-   v
-Devices
-   |
-   | local Wi-Fi
-   v
-Household peers
+1. Local grocery list  →  2. IndexedDB persistence  →  3. PWA/offline install
+→  4. Family + grocery admin/member roles  →  5. Operation log
+→  6. Local two-device sync (manual-signalled WebRTC, idempotent merge)
+→  7. Conflict policy (LWW + terminal delete)  →  8. GitHub Pages deploy
 ```
 
-A device being connected to the same Wi-Fi network does NOT imply household membership.
-
-Household membership is established through an explicit invitation.
-
-### Cryptographic identity
-
-The preferred model is public-key identity.
-
-A household has an identity/key structure, and authorized members/devices possess credentials proving membership.
-
-Private keys remain on the device.
-
-The precise key hierarchy can be refined during implementation.
-
----
-
-## 12. Failure scenarios
-
-### Owner phone disappears during sync
-
-No data should be lost.
-
-Other devices retain their local operation logs.
-
-A later synchronization can restart from those logs.
-
-### Wi-Fi disconnects
-
-Synchronization stops safely.
-
-No partially applied operation should corrupt the local database.
-
-### Peer disappears
-
-The coordinator continues with other available peers.
-
-The missing peer synchronizes during the next session.
-
-### Duplicate operation
-
-The operation ID prevents duplicate application.
-
-### Application update
-
-The PWA receives a new application version from GitHub Pages.
-
-The local database remains intact through database migrations.
-
-### Owner replaces phone
-
-Ownership should be transferable through an explicit local recovery/transfer flow.
-
----
-
-## 13. Repository structure
-
-Suggested initial repository:
+Next (v0.3+):
 
 ```text
-grocery-pwa/
-|
-+-- public/
-|   +-- icons/
-|   +-- catalog/
-|
-+-- src/
-|   +-- ui/
-|   +-- domain/
-|   +-- storage/
-|   +-- sync/
-|   +-- platform/
-|
-+-- tests/
-|
-+-- docs/
-|   +-- requirements.md
-|   +-- architecture.md
-|
-+-- index.html
-+-- manifest.json
-+-- service-worker.ts
-+-- package.json
-+-- README.md
+9.  Super-app home shell + module navigation + Suno identity
+10. To-do module (private lists, delegation lifecycle, NL date/time)
+11. Targeted/private sync (share only delegated tasks)
+12. Automatic peer discovery (relay-assisted or native adapter)
+13. Cryptographic device/member identity + authenticated peers (S1–S4)
 ```
 
-The exact frontend framework can be chosen later.
-
----
-
-## 14. Architectural decisions to finalize before implementation
-
-The following decisions should be made before serious coding:
-
-1. IndexedDB schema.
-2. Operation/event format.
-3. Conflict resolution policy.
-4. Household/member cryptographic identity model.
-5. QR-code join protocol.
-6. Local peer discovery mechanism.
-7. Android native networking mechanism.
-8. Whether the sync service must remain alive when the PWA UI is closed.
-9. Database migration strategy.
-10. Export/import and recovery strategy.
-
-These are the areas most likely to affect the long-term architecture.
-
----
-
-## 15. Recommended implementation order
-
-```text
-1. Local grocery list
-       ↓
-2. IndexedDB persistence
-       ↓
-3. PWA/offline installation
-       ↓
-4. Household + owner/member identities
-       ↓
-5. Operation log
-       ↓
-6. Local two-device synchronization
-       ↓
-7. Conflict resolution
-       ↓
-8. Automatic device discovery
-       ↓
-9. Android networking adapter
-       ↓
-10. QR-based household joining
-       ↓
-11. Sync verification
-       ↓
-12. GitHub Pages deployment
-```
-
-The first milestone should deliberately avoid network complexity.
-
-Prove that the local data model and operation log work correctly first. Then add synchronization on top.
+The first milestones deliberately avoided network complexity: prove the local data model
+and operation log first, then layer synchronization and discovery on top.

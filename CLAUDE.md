@@ -1,9 +1,10 @@
 # CLAUDE.md
 
-You are working on the **Local-First Family Grocery PWA**. See `README.md` for what the
-project is and its direction, `requirements.md` for product/security/usability
-requirements, `architecture.md` for the design approach and layering, and `plan.md` for
-what we are building next.
+You are working on **Suno**, a **local-first family super-app** (a static PWA of modules —
+Grocery today, To-do next, more later — that store data on each phone and sync peer-to-peer
+over the local network). See `README.md` for what the project is and its direction,
+`requirements.md` for product/security/usability requirements, `architecture.md` for the
+design approach and layering, and `plan.md` for what we are building next.
 
 This file holds only **generic working rules**. Project-specific scope, architecture,
 device, and app-model decisions live in the project files above — not here.
