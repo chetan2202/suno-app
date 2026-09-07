@@ -8,10 +8,6 @@ import { qrImage } from "../qr.js";
 import { renderCatalogEditor } from "./catalog-editor.js";
 import { renderMembers } from "./members.js";
 
-// Sync (Wi-Fi WebRTC + Google Drive) is deferred by the owner until explicitly revisited.
-// All the code stays in place; flip this to true to bring the sync UI back.
-const SYNC_UI_ENABLED = false;
-
 // A collapsible menu section whose open/closed state survives re-renders: the key is
 // remembered in the controller (ctx.openSections) and re-applied here, and a user toggle
 // records the new state without forcing a re-render.
@@ -175,9 +171,10 @@ export function renderMenu(ctx: ViewCtx): HTMLElement {
   const sections: (HTMLElement | false)[] = [
     householdCard(ctx),
     inviteSection(ctx),
-    // Sync UI (Wi-Fi + Cloud) deferred until the owner revisits it; see SYNC_UI_ENABLED.
-    SYNC_UI_ENABLED && syncSection(ctx),
-    SYNC_UI_ENABLED && ctx.cloud.configured && cloudSection(ctx),
+    syncSection(ctx), // Wi-Fi (WebRTC) sync - the core feature.
+    // Google Drive cloud sync stays hidden until an OAuth client id is configured
+    // (owner disabled the Drive button; backend decision still open).
+    ctx.cloud.configured && cloudSection(ctx),
     ...adminSections(ctx),
     el("button", { class: "btn danger full", text: "Leave & reset household", onClick: () => {
       if (confirm("Leave this household on this device? Your local list stays until you set up again.")) {
