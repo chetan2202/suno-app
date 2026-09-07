@@ -17,6 +17,7 @@ export const STORE_MEMBERS = "members";
 export const META_IDENTITY_KEY = "identity";
 export const META_SETTINGS_KEY = "settings";
 export const META_CATALOG_KEY = "catalog";
+export const META_CLOUD_KEY = "cloud-sync";
 
 export const upgrade: UpgradeFn = (db, oldVersion) => {
   if (oldVersion < 1) {

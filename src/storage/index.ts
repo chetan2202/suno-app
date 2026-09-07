@@ -6,17 +6,20 @@ import type { OpEnv } from "../domain/operation-factory.js";
 import type { HouseholdEnv } from "./household-repository.js";
 import { GroceryRepository } from "./repository.js";
 import { HouseholdRepository } from "./household-repository.js";
+import { CloudConfigStore } from "./cloud-config.js";
 import { IdbPersistence } from "./idb-persistence.js";
 
 export * from "./port.js";
 export * from "./repository.js";
 export * from "./household-repository.js";
+export * from "./cloud-config.js";
 export * from "./idb-persistence.js";
 export * from "./memory-persistence.js";
 
 export interface App {
   grocery: GroceryRepository;
   household: HouseholdRepository;
+  cloudConfig: CloudConfigStore;
   deviceId: string;
 }
 
@@ -25,5 +28,6 @@ export async function openApp(env?: { op?: OpEnv; household?: HouseholdEnv }): P
   const port = await IdbPersistence.open();
   const grocery = await GroceryRepository.open(port, env?.op);
   const household = await HouseholdRepository.open(port, env?.household);
-  return { grocery, household, deviceId: grocery.getDeviceId() };
+  const cloudConfig = await CloudConfigStore.open(port);
+  return { grocery, household, cloudConfig, deviceId: grocery.getDeviceId() };
 }

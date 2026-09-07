@@ -3,3 +3,6 @@
 // the operation log, which merges idempotently. See architecture.md sections 7 and 9.
 export * from "./webrtc-session.js";
 export * from "./sync-service.js";
+export * from "./cloud-sync.js";
+export * from "./drive-sync-service.js";
+export * from "./google-config.js";

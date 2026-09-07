@@ -7,7 +7,7 @@ import type { Actions, SyncView, Tab, ViewCtx } from "./context.js";
 import type { SyncStatus } from "../sync/index.js";
 import { resolveCatalog } from "../domain/catalog.js";
 import { decodeInvite } from "../domain/invite.js";
-import { WebRtcSession, SyncService } from "../sync/index.js";
+import { WebRtcSession, SyncService, DriveCloudSync } from "../sync/index.js";
 import { clear, el } from "./dom.js";
 import { renderWelcome } from "./views/welcome.js";
 import { renderJoin } from "./views/join.js";
@@ -37,16 +37,27 @@ export class AppController {
 
   private session: WebRtcSession | null = null;
   private sync: SyncView = { active: false, role: null, status: "", shareCode: "", busy: false };
+  private readonly cloud: DriveCloudSync;
 
   constructor(
     private readonly root: HTMLElement,
     private readonly app: App,
     private readonly base: MasterCatalog,
     private readonly appVersion: number,
-  ) {}
+  ) {
+    this.cloud = new DriveCloudSync({
+      grocery: this.app.grocery,
+      config: this.app.cloudConfig,
+      deviceId: this.app.deviceId,
+      householdName: () => this.app.household.getSettings().household_name,
+      onStatus: () => this.render(),
+      onChange: () => this.render(),
+    });
+  }
 
   mount(): void {
     this.render();
+    void this.cloud.resume(); // silently reconnect if cloud sync was enabled
   }
 
   showUpdateAvailable(apply: () => void): void {
@@ -80,6 +91,7 @@ export class AppController {
     finishOnboarding: async () => { await this.app.household.completeOnboarding(); this.tab = "list"; this.render(); },
     resetHousehold: async () => {
       this.syncStopInternal();
+      this.cloud.stop();
       await this.app.household.resetHousehold();
       this.menuOpen = false;
       this.memberJoining = false;
@@ -138,6 +150,10 @@ export class AppController {
       this.render();
     },
     syncStop: () => { this.syncStopInternal(); this.render(); },
+
+    cloudConnect: () => this.cloud.connect(),
+    cloudDisconnect: () => this.cloud.disconnect(),
+    cloudSyncNow: () => this.cloud.syncNow(),
   };
 
   private async startAdminFlow(): Promise<void> {
@@ -187,6 +203,7 @@ export class AppController {
       addSheetItem: this.addSheetItem,
       onboardingStep: this.onboardingStep,
       sync: this.sync,
+      cloud: this.cloud.getView(),
       actions: this.actions,
     };
   }

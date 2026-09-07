@@ -102,6 +102,57 @@ function syncSection(ctx: ViewCtx): HTMLElement {
   ]);
 }
 
+function cloudStatusText(ctx: ViewCtx): string {
+  const c = ctx.cloud;
+  if (c.message) return c.message;
+  switch (c.status) {
+    case "connecting": return "Signing in...";
+    case "syncing": return "Syncing...";
+    case "synced": return c.lastSyncAt ? `Synced ${timeAgo(c.lastSyncAt)}.` : "Synced.";
+    case "error": return "Sync error.";
+    default: return c.enabled ? "Connected." : "Off.";
+  }
+}
+
+function timeAgo(ts: number): string {
+  const secs = Math.max(0, Math.round((Date.now() - ts) / 1000));
+  if (secs < 60) return "just now";
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return `${mins} min ago`;
+  return `${Math.round(mins / 60)} h ago`;
+}
+
+function cloudSection(ctx: ViewCtx): HTMLElement {
+  const c = ctx.cloud;
+  const children: (HTMLElement | false)[] = [
+    el("summary", { text: "☁️ Cloud sync (Google Drive)" }),
+    el("p", { class: "hint", text: "Everyone signs into the same household Google account. Lists sync automatically, no Wi-Fi pairing." }),
+  ];
+
+  if (!c.configured) {
+    children.push(el("p", { class: "sync-status", text: "Not set up in this build yet." }));
+    return section(ctx, "cloud", children);
+  }
+
+  children.push(el("p", { class: "sync-status", text: cloudStatusText(ctx) }));
+
+  if (!c.enabled) {
+    children.push(el("button", { class: "btn primary full", text: "Connect Google Drive", onClick: () => void ctx.actions.cloudConnect() }));
+  } else {
+    if (c.account) children.push(el("p", { class: "hint", text: `Signed in as ${c.account}` }));
+    const busy = c.status === "syncing" || c.status === "connecting";
+    if (c.status === "error") {
+      // A background token expiry lands here: re-consent, do not just retry the API.
+      children.push(el("button", { class: "btn primary full", text: "Reconnect", onClick: () => void ctx.actions.cloudConnect() }));
+    } else {
+      children.push(el("button", { class: "btn primary full", text: "Sync now", disabled: busy, onClick: () => void ctx.actions.cloudSyncNow() }));
+    }
+    children.push(el("button", { class: "btn ghost full", text: "Disconnect", onClick: () => void ctx.actions.cloudDisconnect() }));
+  }
+
+  return section(ctx, "cloud", children);
+}
+
 function adminSections(ctx: ViewCtx): (HTMLElement | false)[] {
   if (ctx.settings.role !== "admin") return [];
   return [
@@ -121,6 +172,7 @@ export function renderMenu(ctx: ViewCtx): HTMLElement {
     householdCard(ctx),
     inviteSection(ctx),
     syncSection(ctx),
+    cloudSection(ctx),
     ...adminSections(ctx),
     el("button", { class: "btn danger full", text: "Leave & reset household", onClick: () => {
       if (confirm("Leave this household on this device? Your local list stays until you set up again.")) {

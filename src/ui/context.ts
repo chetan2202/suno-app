@@ -7,6 +7,7 @@ import type { GroceryItem, MasterCatalog, MasterCategory, Member } from "../doma
 import type { GroceryState } from "../domain/reducer.js";
 import type { AddPayload } from "../domain/payloads.js";
 import type { CatalogCustomization, HouseholdSettings } from "../domain/catalog.js";
+import type { CloudSyncView } from "../sync/cloud-sync.js";
 
 export type Tab = "list" | "browse";
 
@@ -63,6 +64,11 @@ export interface Actions {
   syncHostConnect(answerCode: string): Promise<void>;
   syncGuestAnswer(offerCode: string): Promise<void>;
   syncStop(): void;
+
+  // opt-in Google Drive cloud sync (one shared household Google account).
+  cloudConnect(): Promise<void>;
+  cloudDisconnect(): Promise<void>;
+  cloudSyncNow(): Promise<void>;
 }
 
 export interface ViewCtx {
@@ -85,6 +91,7 @@ export interface ViewCtx {
   addSheetItem: { id: string; name: string; unit: string; categoryId: string } | null;
   onboardingStep: 1 | 2;
   sync: SyncView;
+  cloud: CloudSyncView;
 
   actions: Actions;
 }
