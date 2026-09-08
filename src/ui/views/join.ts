@@ -34,7 +34,7 @@ export function renderJoin(ctx: ViewCtx): HTMLElement {
 
   return el("div", { class: "sheet-screen" }, [
     el("div", { class: "screen-head" }, [
-      el("button", { class: "icon-btn", "aria-label": "Back", onClick: () => ctx.actions.resetHousehold() }, [icon("back", 22)]),
+      el("button", { class: "icon-btn", "aria-label": "Back", onClick: () => ctx.actions.cancelJoin() }, [icon("back", 22)]),
       el("h1", { class: "screen-title", text: "Join a household" }),
     ]),
     scanArea,

@@ -224,7 +224,7 @@ export function renderMenu(ctx: ViewCtx): HTMLElement {
     ctx.cloud.configured && cloudSection(ctx),
     ...manageSections(ctx),
     el("button", { class: "btn danger full", text: "Leave & reset household", onClick: () => {
-      if (confirm("Leave this household on this device? Your local list stays until you set up again.")) {
+      if (confirm("Leave this household and erase all its data on this device? This cannot be undone.")) {
         void ctx.actions.resetHousehold();
       }
     } }),

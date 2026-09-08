@@ -26,6 +26,9 @@ export interface App {
   household: HouseholdRepository;
   cloudConfig: CloudConfigStore;
   deviceId: string;
+  /** Erase all local data (identity, op log, members, config). The caller reloads so the
+   * app re-boots into first-run state with a fresh device id. */
+  wipe(): Promise<void>;
 }
 
 /** Open the whole app over one IndexedDB connection (the browser default). Grocery and
@@ -37,5 +40,12 @@ export async function openApp(env?: { op?: OpEnv; household?: HouseholdEnv }): P
   const todo = TodoRepository.fromStore(store);
   const household = await HouseholdRepository.open(port, env?.household);
   const cloudConfig = await CloudConfigStore.open(port);
-  return { grocery, todo, household, cloudConfig, deviceId: store.deviceId };
+  return {
+    grocery,
+    todo,
+    household,
+    cloudConfig,
+    deviceId: store.deviceId,
+    wipe: () => port.clearAll(),
+  };
 }

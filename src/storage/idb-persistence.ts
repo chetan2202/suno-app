@@ -83,4 +83,12 @@ export class IdbPersistence implements PersistencePort {
     tx.objectStore(STORE_MEMBERS).delete(memberId);
     await transactionDone(tx);
   }
+
+  async clearAll(): Promise<void> {
+    const tx = this.db.transaction([STORE_META, STORE_OPERATIONS, STORE_MEMBERS], "readwrite");
+    tx.objectStore(STORE_META).clear();
+    tx.objectStore(STORE_OPERATIONS).clear();
+    tx.objectStore(STORE_MEMBERS).clear();
+    await transactionDone(tx);
+  }
 }

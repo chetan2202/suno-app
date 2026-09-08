@@ -100,13 +100,14 @@ export class AppController {
       this.render();
     },
     finishOnboarding: async () => { await this.app.household.completeOnboarding(); this.module = "home"; this.render(); },
+    cancelJoin: () => { this.memberJoining = false; this.render(); },
+    // Leave & reset: erase ALL local data, then reload so the app re-boots into first-run
+    // state (fresh device id). This is the reliable way to fully clear the device.
     resetHousehold: async () => {
       this.syncStopInternal();
       this.cloud.stop();
-      await this.app.household.resetHousehold();
-      this.menuOpen = false;
-      this.memberJoining = false;
-      this.render();
+      await this.app.wipe();
+      location.reload();
     },
     // Rename actions fire on blur; do NOT re-render (it would steal focus from a field
     // the user may still be filling). The DOM already shows the new value.

@@ -38,6 +38,29 @@ describe("IdbPersistence (real IndexedDB via fake-indexeddb)", () => {
     expect(await p.loadOperations()).toHaveLength(1);
   });
 
+  it("clearAll erases identity, operations, members and meta", async () => {
+    const p = await IdbPersistence.open();
+    await p.saveIdentity({ device_id: "dev-X" });
+    await p.appendOperations([
+      { operation_id: "op-1", device_id: "dev-X", sequence: 1, item_id: "item-1",
+        operation_type: "ADD", payload: {}, logical_version: 1, created_at: 1 },
+    ]);
+    await p.putMember({ member_id: "m1", display_name: "Mom", created_at: 1 });
+    await p.saveMeta("settings", { household_name: "Home" });
+
+    await p.clearAll();
+
+    expect(await p.loadIdentity()).toBeNull();
+    expect(await p.loadOperations()).toHaveLength(0);
+    expect(await p.loadMembers()).toHaveLength(0);
+    expect(await p.loadMeta("settings")).toBeNull();
+
+    // A reopen (as after a reload) stays empty - a true first-run state.
+    const reopened = await IdbPersistence.open();
+    expect(await reopened.loadIdentity()).toBeNull();
+    expect(await reopened.loadOperations()).toHaveLength(0);
+  });
+
   it("a repository over IndexedDB survives a reopen with identical state", async () => {
     const repo = await GroceryRepository.open(await IdbPersistence.open(), testEnv());
     await repo.addItem({ catalog_item_id: "soap", name: "Soap", for_member_id: "mem-mom", quantity: 1, unit: "bar" });

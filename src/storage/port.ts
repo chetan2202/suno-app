@@ -32,4 +32,8 @@ export interface PersistencePort {
   putMember(member: Member): Promise<void>;
   /** Remove a member by id. */
   deleteMember(memberId: string): Promise<void>;
+
+  /** Erase everything on this device: identity, operation log, members, and config. Used by
+   * "Leave & reset" to return the device to a first-run state. */
+  clearAll(): Promise<void>;
 }

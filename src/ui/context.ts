@@ -45,6 +45,7 @@ export interface Actions {
   chooseCreate(): void;
   chooseJoin(): void;
   joinFromCode(code: string): Promise<void>;
+  cancelJoin(): void;
   finishOnboarding(): Promise<void>;
   resetHousehold(): Promise<void>;
   renameHousehold(name: string): Promise<void>;

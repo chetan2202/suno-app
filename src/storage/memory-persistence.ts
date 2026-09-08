@@ -47,4 +47,11 @@ export class MemoryPersistence implements PersistencePort {
   async deleteMember(memberId: string): Promise<void> {
     this.members.delete(memberId);
   }
+
+  async clearAll(): Promise<void> {
+    this.identity = null;
+    this.ops.clear();
+    this.meta.clear();
+    this.members.clear();
+  }
 }
