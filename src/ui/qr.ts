@@ -4,12 +4,16 @@
 import QRCode from "qrcode";
 import { el } from "./dom.js";
 
-/** An <img> whose src is filled asynchronously with a QR of the text. */
-export function qrImage(text: string, size = 200): HTMLImageElement {
+/** Error-correction level: L (most data capacity, sparsest) ... H (most robust, densest). */
+export type QrLevel = "L" | "M" | "Q" | "H";
+
+/** An <img> whose src is filled asynchronously with a QR of the text. A larger size and a
+ * lower error-correction level make a big payload (e.g. a sync code) sparse enough to scan. */
+export function qrImage(text: string, size = 200, level: QrLevel = "M"): HTMLImageElement {
   const img = el("img", { class: "qr", "aria-label": "QR code" });
   img.width = size;
   img.height = size;
-  QRCode.toDataURL(text, { margin: 1, width: size })
+  QRCode.toDataURL(text, { margin: 1, width: size, errorCorrectionLevel: level })
     .then((url) => {
       img.src = url;
     })

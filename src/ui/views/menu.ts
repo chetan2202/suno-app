@@ -69,11 +69,12 @@ function codeBox(code: string): HTMLTextAreaElement {
   return box;
 }
 
-/** QR + code the other phone scans or copies. */
+/** QR + code the other phone scans or copies. The sync code is large, so render the QR big
+ * and at the sparsest error-correction level (L) to keep it scannable from a phone screen. */
 function showCode(text: string, code: string): HTMLElement[] {
   return [
     el("p", { class: "hint", text }),
-    el("div", { class: "qr-wrap" }, [qrImage(code)]),
+    el("div", { class: "qr-wrap" }, [qrImage(code, 300, "L")]),
     codeBox(code),
   ];
 }

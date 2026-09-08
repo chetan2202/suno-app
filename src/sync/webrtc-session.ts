@@ -6,6 +6,11 @@
 // (host) produces an offer code, the member (guest) returns an answer code — so no
 // signalling server is needed. ICE uses local host candidates only (iceServers: []),
 // keeping traffic on the local network.
+//
+// The codes are compressed (see codec.ts) so their QR is sparse enough to scan from another
+// phone's screen; a raw SDP makes a QR too dense for a camera to read.
+
+import { encodeSignal, decodeSignal } from "./codec.js";
 
 type Cb0 = () => void;
 type Cb1 = (text: string) => void;
@@ -22,14 +27,6 @@ export interface SyncSession {
   onMessage(cb: Cb1): void;
   onClose(cb: Cb0): void;
   close(): void;
-}
-
-function encode(desc: RTCSessionDescription | null): string {
-  return btoa(JSON.stringify(desc));
-}
-
-function decode(code: string): RTCSessionDescriptionInit {
-  return JSON.parse(atob(code.trim())) as RTCSessionDescriptionInit;
 }
 
 /** Resolve once ICE candidate gathering is complete (candidates are then in the SDP). */
@@ -66,20 +63,20 @@ export class WebRtcSession implements SyncSession {
     const offer = await this.pc.createOffer();
     await this.pc.setLocalDescription(offer);
     await waitForIce(this.pc);
-    return encode(this.pc.localDescription);
+    return encodeSignal(this.pc.localDescription);
   }
 
   async applyAnswer(code: string): Promise<void> {
-    await this.pc.setRemoteDescription(decode(code));
+    await this.pc.setRemoteDescription(await decodeSignal(code));
   }
 
   async applyOffer(code: string): Promise<string> {
     this.pc.ondatachannel = (e) => this.wire(e.channel);
-    await this.pc.setRemoteDescription(decode(code));
+    await this.pc.setRemoteDescription(await decodeSignal(code));
     const answer = await this.pc.createAnswer();
     await this.pc.setLocalDescription(answer);
     await waitForIce(this.pc);
-    return encode(this.pc.localDescription);
+    return encodeSignal(this.pc.localDescription);
   }
 
   send(text: string): void {
