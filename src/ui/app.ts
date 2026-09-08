@@ -19,6 +19,7 @@ import { renderTodo, renderTodoAddSheet } from "./views/todo.js";
 import { renderMenu } from "./views/menu.js";
 import { icon, type IconName } from "./icon.js";
 import { updateBanner } from "./views/update.js";
+import { renderWhatsNew, shouldShowWhatsNew, markWhatsNewSeen } from "./views/whatsnew.js";
 
 const SYNC_TEXT: Record<SyncStatus, string> = {
   idle: "Not connected.",
@@ -38,6 +39,7 @@ export class AppController {
   private addSheetItem: ViewCtx["addSheetItem"] = null;
   private onboardingStep: 1 | 2 = 1;
   private todoAddOpen = false;
+  private whatsNewOpen = false;
   private updateApply: (() => void) | null = null;
 
   private session: WebRtcSession | null = null;
@@ -61,6 +63,8 @@ export class AppController {
   }
 
   mount(): void {
+    // Show the welcome / what's-new panel on first open and after each release.
+    this.whatsNewOpen = shouldShowWhatsNew(this.appVersion);
     this.render();
     void this.cloud.resume(); // silently reconnect if cloud sync was enabled
   }
@@ -71,6 +75,7 @@ export class AppController {
   }
 
   private readonly actions: Actions = {
+    dismissWhatsNew: () => { markWhatsNewSeen(this.appVersion); this.whatsNewOpen = false; this.render(); window.scrollTo(0, 0); },
     openModule: (id) => { this.module = id; this.tab = "list"; this.browseCategoryId = null; this.render(); window.scrollTo(0, 0); },
     goHome: () => { this.module = "home"; this.menuOpen = false; this.render(); window.scrollTo(0, 0); },
     setTab: (tab) => { this.tab = tab; this.browseCategoryId = null; this.render(); },
@@ -234,6 +239,9 @@ export class AppController {
     const ctx = this.buildCtx();
     clear(this.root);
     if (this.updateApply) this.root.append(updateBanner(this.updateApply));
+
+    // Welcome / what's-new comes first, over everything, until dismissed.
+    if (this.whatsNewOpen) { this.root.append(renderWhatsNew(ctx)); return; }
 
     // First-run and setup states.
     if (ctx.settings.role === null && !this.memberJoining) { this.root.append(renderWelcome(ctx)); return; }

@@ -29,6 +29,7 @@ export interface SyncView {
 
 export interface Actions {
   // navigation / transient UI
+  dismissWhatsNew(): void;
   openModule(id: ModuleId): void;
   goHome(): void;
   setTab(tab: Tab): void;
