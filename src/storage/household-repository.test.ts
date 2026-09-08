@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { HouseholdRepository } from "./household-repository.js";
 import type { HouseholdEnv } from "./household-repository.js";
 import { MemoryPersistence } from "./memory-persistence.js";
+import { META_SETTINGS_KEY } from "./schema.js";
 
 function env(): HouseholdEnv {
   let m = 0;
@@ -15,7 +16,7 @@ function env(): HouseholdEnv {
 }
 
 describe("HouseholdRepository", () => {
-  it("defaults to the Regular profile, not yet onboarded, no role", async () => {
+  it("defaults to the Regular profile, not yet onboarded, no household", async () => {
     const repo = await HouseholdRepository.open(new MemoryPersistence(), env());
     expect(repo.getSettings()).toEqual({
       profile_id: "regular",
@@ -39,16 +40,16 @@ describe("HouseholdRepository", () => {
     expect(reopened.getSettings().onboarded).toBe(true);
   });
 
-  it("starts as admin, joins as member from an invite, and resets", async () => {
+  it("creates a household, joins one from an invite, and resets (everyone is a member)", async () => {
     const port = new MemoryPersistence();
     const repo = await HouseholdRepository.open(port, env());
 
-    await repo.startAsAdmin("Sharma Family");
-    expect(repo.getRole()).toBe("admin");
+    await repo.createHousehold("Sharma Family");
+    expect(repo.getRole()).toBe("member");
     expect(repo.getSettings().household_name).toBe("Sharma Family");
     expect(repo.getSettings().household_id).toMatch(/^hh-/);
 
-    await repo.joinAsMember({ v: 1, hid: "hh-x", hname: "Other Home", profile: "vegetarian" });
+    await repo.joinHousehold({ v: 1, hid: "hh-x", hname: "Other Home", profile: "vegetarian" });
     expect(repo.getRole()).toBe("member");
     expect(repo.getSettings().household_id).toBe("hh-x");
     expect(repo.getSettings().profile_id).toBe("vegetarian");
@@ -57,6 +58,17 @@ describe("HouseholdRepository", () => {
     await repo.resetHousehold();
     expect(repo.getRole()).toBeNull();
     expect(repo.getSettings().onboarded).toBe(false);
+  });
+
+  it("migrates a legacy admin role to member on open", async () => {
+    const port = new MemoryPersistence();
+    const seed = await HouseholdRepository.open(port, env());
+    await seed.createHousehold("Legacy Home");
+    // Simulate an install persisted before roles were removed.
+    await port.saveMeta(META_SETTINGS_KEY, { ...seed.getSettings(), role: "admin" });
+
+    const reopened = await HouseholdRepository.open(port, env());
+    expect(reopened.getRole()).toBe("member");
   });
 
   it("stores the required app version and keeps it across reopen", async () => {

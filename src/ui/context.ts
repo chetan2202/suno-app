@@ -41,10 +41,9 @@ export interface Actions {
   closeAddSheet(): void;
   goToStep(step: 1 | 2): void;
 
-  // first-run roles
-  chooseAdmin(): void;
-  startAsAdmin(householdName: string): Promise<void>;
-  chooseMember(): void;
+  // first-run: create a household or join one (no admin - everyone is equal)
+  chooseCreate(): void;
+  chooseJoin(): void;
   joinFromCode(code: string): Promise<void>;
   finishOnboarding(): Promise<void>;
   resetHousehold(): Promise<void>;

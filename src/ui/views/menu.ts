@@ -36,20 +36,16 @@ function householdCard(ctx: ViewCtx): HTMLElement {
     value: ctx.settings.household_name,
     onChange: () => void ctx.actions.renameHousehold((name as HTMLInputElement).value),
   });
-  const roleText = ctx.settings.role === "admin" ? "Admin" : "Member";
   return el("div", { class: "menu-card" }, [
     el("div", { class: "menu-card-head" }, [
       el("span", { class: "field-label", text: "Household" }),
-      el("span", { class: "role-badge", text: roleText }),
     ]),
-    ctx.settings.role === "admin"
-      ? name
-      : el("p", { class: "menu-value", text: ctx.settings.household_name }),
+    name,
   ]);
 }
 
 function inviteSection(ctx: ViewCtx): HTMLElement | false {
-  if (ctx.settings.role !== "admin" || !ctx.settings.household_id) return false;
+  if (!ctx.settings.household_id) return false;
   const code = encodeInvite({
     v: 1,
     hid: ctx.settings.household_id,
@@ -202,8 +198,9 @@ function cloudSection(ctx: ViewCtx): HTMLElement {
   return section(ctx, "cloud", children);
 }
 
-function adminSections(ctx: ViewCtx): (HTMLElement | false)[] {
-  if (ctx.settings.role !== "admin") return [];
+// Catalog and members management - available to everyone now (no admin).
+function manageSections(ctx: ViewCtx): (HTMLElement | false)[] {
+  if (!ctx.settings.household_id) return [];
   return [
     section(ctx, "catalog", [
       summaryLabel("grid", "Catalog & profile"),
@@ -224,7 +221,7 @@ export function renderMenu(ctx: ViewCtx): HTMLElement {
     // Google Drive cloud sync stays hidden until an OAuth client id is configured
     // (owner disabled the Drive button; backend decision still open).
     ctx.cloud.configured && cloudSection(ctx),
-    ...adminSections(ctx),
+    ...manageSections(ctx),
     el("button", { class: "btn danger full", text: "Leave & reset household", onClick: () => {
       if (confirm("Leave this household on this device? Your local list stays until you set up again.")) {
         void ctx.actions.resetHousehold();

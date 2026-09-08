@@ -32,7 +32,7 @@ const settings = (profile_id: string) => ({
   profile_id,
   onboarded: true,
   required_app_version: 1,
-  role: "admin" as const,
+  role: "member" as const,
   household_id: "hh-1",
   household_name: "Home",
   my_member_id: null,

@@ -1,5 +1,6 @@
-// First-run role choice. One device belongs to exactly one household (home OR office
-// OR farmhouse) — multiple households is a later version. To switch, Leave & reset.
+// First-run choice: create a household or join one. There is no admin - everyone in a
+// household is an equal participant. One device belongs to one household for now;
+// multiple households is a later version. To switch, Leave & reset.
 
 import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
@@ -20,11 +21,11 @@ export function renderWelcome(ctx: ViewCtx): HTMLElement {
       el("h1", { class: "brand-name", text: "Suno" }),
       el("p", { class: "brand-tag", text: "Your family, in sync" }),
     ]),
-    choice("home", "Start a household", "You become the admin — set up the list and invite family.", () =>
-      ctx.actions.chooseAdmin(),
+    choice("home", "Start a household", "Set up the list and invite your family to join.", () =>
+      ctx.actions.chooseCreate(),
     ),
-    choice("qr", "Join a household", "Scan or paste the invite your family admin shares.", () =>
-      ctx.actions.chooseMember(),
+    choice("qr", "Join a household", "Scan or paste the invite a family member shares.", () =>
+      ctx.actions.chooseJoin(),
     ),
     el("p", { class: "welcome-note", text: "One device joins one household at a time." }),
   ]);

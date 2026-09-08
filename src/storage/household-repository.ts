@@ -1,4 +1,4 @@
-// Household config repository: members, diet/onboarding settings, and admin catalog
+// Household config repository: members, diet/onboarding settings, and catalog
 // customization. These are simple local records in v0.1 (not operations); v0.2 folds
 // them into the sync model. Grocery lines live in GroceryRepository / the op log.
 
@@ -41,9 +41,11 @@ export class HouseholdRepository {
     const stored = await port.loadMeta<Partial<HouseholdSettings>>(META_SETTINGS_KEY);
     // Backfill any fields missing from an older stored shape.
     const settings: HouseholdSettings = { ...defaultSettings(), ...(stored ?? {}) };
-    // Legacy migration: a device already onboarded before roles existed was the admin.
+    // Migration: admin/member roles are gone - everyone is an equal "member". Coerce any
+    // legacy "admin" value, and mark an already-onboarded pre-roles device as a member.
+    if ((settings.role as string) === "admin") settings.role = "member";
     if (settings.onboarded && settings.role === null) {
-      settings.role = "admin";
+      settings.role = "member";
       if (!settings.household_id) settings.household_id = newHouseholdId();
     }
     if (stored) await port.saveMeta(META_SETTINGS_KEY, settings); // persist normalization
@@ -53,7 +55,7 @@ export class HouseholdRepository {
     return new HouseholdRepository(port, env, settings, customization, members);
   }
 
-  // --- Role / household identity ---
+  // --- Household membership / identity ---
 
   getRole(): HouseholdRole {
     return this.settings.role;
@@ -64,17 +66,18 @@ export class HouseholdRepository {
     await this.port.saveMeta(META_SETTINGS_KEY, this.settings);
   }
 
-  /** Start a new household on this device (this device becomes the admin). */
-  async startAsAdmin(householdName: string): Promise<void> {
+  /** Create a new household on this device. The creator has no special powers - everyone
+   * in a household is an equal participant. */
+  async createHousehold(householdName: string): Promise<void> {
     await this.patchSettings({
-      role: "admin",
+      role: "member",
       household_id: newHouseholdId(),
       household_name: householdName.trim() || "Home",
     });
   }
 
-  /** Join an existing household from a scanned/entered invite (this device is a member). */
-  async joinAsMember(invite: HouseholdInvite): Promise<void> {
+  /** Join an existing household from a scanned/entered invite. */
+  async joinHousehold(invite: HouseholdInvite): Promise<void> {
     await this.patchSettings({
       role: "member",
       household_id: invite.hid,
@@ -157,7 +160,7 @@ export class HouseholdRepository {
     if (this.settings.my_member_id === memberId) await this.patchSettings({ my_member_id: null });
   }
 
-  // --- Catalog customization (admin) ---
+  // --- Catalog customization ---
 
   getCustomization(): CatalogCustomization {
     return this.customization;

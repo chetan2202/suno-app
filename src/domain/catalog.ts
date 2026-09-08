@@ -1,30 +1,31 @@
 // Catalog resolution: turn the shipped master catalog + the household's profile and
-// admin customization into the "effective" catalog a family member picks products from.
+// customization into the "effective" catalog a family member picks products from.
 //
 // Rules:
 //   - Profile filters categories by diet (Vegetarian sees veg + non-food; Regular
 //     sees everything).
-//   - The admin can remove base items or whole categories; removed entries are hidden
+//   - Anyone can remove base items or whole categories; removed entries are hidden
 //     from everyone.
-//   - The admin can add custom products when the master is missing something; these
+//   - Anyone can add custom products when the master is missing something; these
 //     appear together under a synthetic "My Items" category.
 //
 // All functions are pure and browser-free (testable).
 
 import type { Diet, MasterCatalog, MasterCategory } from "./types.js";
 
-/** This device's role in the household. null until the first-run choice is made. */
-export type HouseholdRole = "admin" | "member" | null;
+/** Whether this device belongs to a household yet. null until the first-run choice is made.
+ * There is no admin/member split - everyone in a household is an equal participant. */
+export type HouseholdRole = "member" | null;
 
-/** Household diet/onboarding settings (admin-managed, local config in v0.1). */
+/** Household diet/onboarding settings (local config in v0.1). */
 export interface HouseholdSettings {
   profile_id: string;
   onboarded: boolean;
   /** App version the household requires all devices to run (see version-gate.ts). */
   required_app_version: number;
-  /** This device's role; null until the user chooses start-as-admin or join-as-member. */
+  /** Whether this device has joined/created a household; null until the first-run choice. */
   role: HouseholdRole;
-  /** Household identity (created by the admin, carried to members via the invite). */
+  /** Household identity (set when created, carried to others via the invite). */
   household_id: string | null;
   household_name: string;
   /** Which member THIS device is (for the To-do module: "my list", delegation). null until
@@ -39,7 +40,7 @@ export interface CustomCatalogItem {
   unit: string;
 }
 
-/** The admin's edits layered over the master catalog. */
+/** The household's edits layered over the master catalog. */
 export interface CatalogCustomization {
   removed_item_ids: string[];
   removed_category_ids: string[];
@@ -73,7 +74,7 @@ export function profileDiets(base: MasterCatalog, profileId: string): Diet[] {
 }
 
 /**
- * The effective catalog: master categories filtered by profile and admin removals,
+ * The effective catalog: master categories filtered by profile and removals,
  * plus a "My Items" category for household-added products. Empty subcategories and
  * categories are dropped.
  */

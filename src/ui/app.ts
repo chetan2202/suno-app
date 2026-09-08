@@ -90,13 +90,12 @@ export class AppController {
     closeAddSheet: () => { this.addSheetItem = null; this.render(); },
     goToStep: (step) => { this.onboardingStep = step; this.render(); window.scrollTo(0, 0); },
 
-    chooseAdmin: () => { void this.startAdminFlow(); },
-    startAsAdmin: async (name) => { await this.app.household.startAsAdmin(name); this.render(); },
-    chooseMember: () => { this.memberJoining = true; this.render(); },
+    chooseCreate: () => { void this.startCreateFlow(); },
+    chooseJoin: () => { this.memberJoining = true; this.render(); },
     joinFromCode: async (code) => {
       const invite = decodeInvite(code);
       if (!invite) throw new Error("invalid invite");
-      await this.app.household.joinAsMember(invite);
+      await this.app.household.joinHousehold(invite);
       this.memberJoining = false;
       this.render();
     },
@@ -177,9 +176,9 @@ export class AppController {
     cloudSyncNow: () => this.cloud.syncNow(),
   };
 
-  private async startAdminFlow(): Promise<void> {
-    if (this.app.household.getRole() !== "admin") {
-      await this.app.household.startAsAdmin(this.app.household.getSettings().household_name);
+  private async startCreateFlow(): Promise<void> {
+    if (this.app.household.getRole() === null) {
+      await this.app.household.createHousehold(this.app.household.getSettings().household_name);
     }
     this.onboardingStep = 1;
     this.render();

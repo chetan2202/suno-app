@@ -25,8 +25,8 @@ async function boot(): Promise<void> {
     const base = (await res.json()) as MasterCatalog;
     const app = await openApp();
 
-    // The admin device advances the household's required version to what it runs.
-    // (v0.1: the sole device is the admin. v0.2 gates this to the owner role.)
+    // A device advances the household's required version to what it runs, so peers on an
+    // older build are prompted to update (see version-gate.ts).
     const settings = app.household.getSettings();
     const required = advanceRequiredVersion(settings.required_app_version, APP_VERSION);
     if (required !== settings.required_app_version) {

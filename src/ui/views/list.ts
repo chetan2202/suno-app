@@ -26,7 +26,6 @@ function memberTag(ctx: ViewCtx, item: GroceryItem): HTMLElement {
 }
 
 function neededRow(ctx: ViewCtx, item: GroceryItem, catOf: Map<string, string>): HTMLElement {
-  const isAdmin = ctx.settings.role === "admin";
   return el("li", { class: "row" }, [
     el("span", { class: "row-icon" }, [rowIcon(item, catOf)]),
     el("div", { class: "row-main" }, [
@@ -37,14 +36,13 @@ function neededRow(ctx: ViewCtx, item: GroceryItem, catOf: Map<string, string>):
       el("button", { class: "step", "aria-label": "Decrease", onClick: () => void ctx.actions.setQuantity(item.item_id, Math.max(1, item.quantity - 1)) }, [icon("minus", 18)]),
       el("span", { class: "qty-label", text: `${item.quantity} ${item.unit}` }),
       el("button", { class: "step", "aria-label": "Increase", onClick: () => void ctx.actions.setQuantity(item.item_id, item.quantity + 1) }, [icon("plus", 18)]),
-      isAdmin && el("button", { class: "icon-btn ok", "aria-label": "Mark done", onClick: () => void ctx.actions.togglePurchased(item) }, [icon("check", 20)]),
+      el("button", { class: "icon-btn ok", "aria-label": "Mark done", onClick: () => void ctx.actions.togglePurchased(item) }, [icon("check", 20)]),
       el("button", { class: "icon-btn danger", "aria-label": "Delete", onClick: () => void ctx.actions.deleteItem(item.item_id) }, [icon("trash", 20)]),
-    ].filter((c): c is HTMLElement => c !== false)),
+    ]),
   ]);
 }
 
 function doneRow(ctx: ViewCtx, item: GroceryItem, catOf: Map<string, string>): HTMLElement {
-  const isAdmin = ctx.settings.role === "admin";
   return el("li", { class: "row done" }, [
     el("span", { class: "row-icon" }, [rowIcon(item, catOf)]),
     el("div", { class: "row-main" }, [
@@ -52,7 +50,7 @@ function doneRow(ctx: ViewCtx, item: GroceryItem, catOf: Map<string, string>): H
       memberTag(ctx, item),
       el("span", { class: "qty-label muted", text: `${item.quantity} ${item.unit}` }),
     ]),
-    isAdmin && el("div", { class: "row-actions" }, [
+    el("div", { class: "row-actions" }, [
       el("button", { class: "icon-btn", "aria-label": "Undo", onClick: () => void ctx.actions.togglePurchased(item) }, [icon("undo", 20)]),
       el("button", { class: "icon-btn danger", "aria-label": "Delete", onClick: () => void ctx.actions.deleteItem(item.item_id) }, [icon("trash", 20)]),
     ]),
