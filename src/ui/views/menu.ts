@@ -4,7 +4,7 @@
 import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
 import { encodeInvite } from "../../domain/invite.js";
-import { qrImage } from "../qr.js";
+import { qrImage, canScan, scanQr } from "../qr.js";
 import { renderCatalogEditor } from "./catalog-editor.js";
 import { renderMembers } from "./members.js";
 import { icon, type IconName } from "../icon.js";
@@ -66,44 +66,87 @@ function inviteSection(ctx: ViewCtx): HTMLElement | false {
   ]);
 }
 
+/** A read-only textarea showing a code the user can copy. */
+function codeBox(code: string): HTMLTextAreaElement {
+  const box = el("textarea", { class: "field code-input", value: code }) as HTMLTextAreaElement;
+  box.readOnly = true;
+  return box;
+}
+
+/** QR + code the other phone scans or copies. */
+function showCode(text: string, code: string): HTMLElement[] {
+  return [
+    el("p", { class: "hint", text }),
+    el("div", { class: "qr-wrap" }, [qrImage(code)]),
+    codeBox(code),
+  ];
+}
+
+// A "scan the other phone's QR" control with a paste fallback. Tapping the button swaps in a
+// live camera view; the first QR found is handed to onCode. Where the camera is unavailable
+// (or the user prefers), a paste box + button provides the same code path.
+function scanOrPaste(scanLabel: string, pastePlaceholder: string, onCode: (code: string) => void): HTMLElement {
+  const wrap = el("div", { class: "scan-area" });
+  const error = el("p", { class: "form-error", text: "" });
+
+  if (canScan()) {
+    const video = el("video", { class: "scan-video" }) as HTMLVideoElement;
+    video.setAttribute("playsinline", "");
+    const scanBtn = el("button", { class: "btn full", text: scanLabel, onClick: () => {
+      scanBtn.replaceWith(video);
+      void scanQr(
+        video,
+        (raw) => onCode(raw.trim()),
+        () => { error.textContent = "Camera not available. Paste the code instead."; },
+      );
+    } });
+    wrap.append(scanBtn);
+  }
+
+  const paste = el("textarea", { class: "field code-input", placeholder: pastePlaceholder }) as HTMLTextAreaElement;
+  const useBtn = el("button", { class: "btn ghost full", text: "Use pasted code", onClick: () => {
+    if (paste.value.trim()) onCode(paste.value.trim());
+  } });
+  wrap.append(paste, useBtn, error);
+  return wrap;
+}
+
+/** Green tick + count after an exchange, or a plain "no new data" line. */
+function syncResult(newOps: number): HTMLElement {
+  if (newOps <= 0) return el("p", { class: "sync-status", text: "No new data." });
+  return el("p", { class: "sync-ok" }, [
+    icon("check", 16, "sync-tick"),
+    el("span", { text: `Synced - ${newOps} new update${newOps === 1 ? "" : "s"}.` }),
+  ]);
+}
+
+// Wi-Fi sync is symmetric: any phone (admin or member) can start a sync or scan another
+// phone to join. It runs peer-to-peer over WebRTC; the two devices swap a QR/code once to
+// connect, then exchange operation logs and converge.
 function syncSection(ctx: ViewCtx): HTMLElement {
   const s = ctx.sync;
-  const status = el("p", { class: "sync-status", text: s.status || "Not connected." });
-  const children: (HTMLElement | false)[] = [status];
+  const children: (HTMLElement | false)[] = [];
 
-  if (ctx.settings.role === "admin") {
-    if (!s.active) {
-      children.push(el("button", { class: "btn primary full", text: "Start Wi-Fi sync", onClick: () => void ctx.actions.syncHostStart() }));
-    } else {
-      if (s.shareCode) {
-        children.push(el("p", { class: "hint", text: "1. Show this to the member (their app scans / pastes it):" }));
-        children.push(el("div", { class: "qr-wrap" }, [qrImage(s.shareCode)]));
-        const box = el("textarea", { class: "field code-input", value: s.shareCode }) as HTMLTextAreaElement;
-        box.readOnly = true;
-        children.push(box);
-      }
-      const answer = el("textarea", { class: "field code-input", placeholder: "2. Paste the member's reply code" }) as HTMLTextAreaElement;
-      children.push(answer);
-      children.push(el("button", { class: "btn primary full", text: "Connect", onClick: () => void ctx.actions.syncHostConnect(answer.value) }));
-      children.push(el("button", { class: "btn ghost full", text: "Stop sync", onClick: () => ctx.actions.syncStop() }));
-    }
+  if (s.status) children.push(el("p", { class: "sync-status", text: s.status }));
+  if (s.result) children.push(syncResult(s.result.newOps));
+
+  if (!s.active) {
+    children.push(el("button", { class: "btn primary full", text: "Start sync", onClick: () => void ctx.actions.syncStart() }));
+    children.push(el("p", { class: "hint", text: "or scan a phone that already started:" }));
+    children.push(scanOrPaste("Scan a phone", "Paste the other phone's sync code", (code) => void ctx.actions.syncJoin(code)));
+  } else if (s.role === "host") {
+    if (s.shareCode) children.push(...showCode("1. Let the other phone scan this (or copy the code):", s.shareCode));
+    children.push(el("p", { class: "hint", text: "2. Then scan their reply:" }));
+    children.push(scanOrPaste("Scan reply", "Paste the reply code", (code) => void ctx.actions.syncApplyReply(code)));
+    children.push(el("button", { class: "btn ghost full", text: "Stop sync", onClick: () => ctx.actions.syncStop() }));
   } else {
-    const offer = el("textarea", { class: "field code-input", placeholder: "1. Paste the admin's sync code" }) as HTMLTextAreaElement;
-    children.push(offer);
-    children.push(el("button", { class: "btn primary full", text: "Generate reply", onClick: () => void ctx.actions.syncGuestAnswer(offer.value) }));
-    if (s.shareCode) {
-      children.push(el("p", { class: "hint", text: "2. Send this reply back to the admin:" }));
-      children.push(el("div", { class: "qr-wrap" }, [qrImage(s.shareCode)]));
-      const box = el("textarea", { class: "field code-input", value: s.shareCode }) as HTMLTextAreaElement;
-      box.readOnly = true;
-      children.push(box);
-    }
-    if (s.active) children.push(el("button", { class: "btn ghost full", text: "Stop sync", onClick: () => ctx.actions.syncStop() }));
+    if (s.shareCode) children.push(...showCode("Show this reply to the other phone (scan or copy):", s.shareCode));
+    children.push(el("button", { class: "btn ghost full", text: "Stop sync", onClick: () => ctx.actions.syncStop() }));
   }
 
   return section(ctx, "sync", [
     summaryLabel("sync", "Sync over Wi-Fi"),
-    el("p", { class: "hint", text: "Both devices must be on the same Wi-Fi. The admin hosts and can stop it anytime." }),
+    el("p", { class: "hint", text: "Both phones must be on the same Wi-Fi. Any phone can start; the other scans the code." }),
     ...children,
   ]);
 }

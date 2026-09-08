@@ -23,6 +23,8 @@ export interface SyncView {
   /** Code this device must show the other (host: offer; guest: answer). */
   shareCode: string;
   busy: boolean;
+  /** Outcome of the last exchange: how many new operations arrived (null before any). */
+  result: { newOps: number } | null;
 }
 
 export interface Actions {
@@ -75,10 +77,10 @@ export interface Actions {
   addCustomItem(name: string, unit: string): Promise<void>;
   removeCustomItem(id: string): Promise<void>;
 
-  // sync (admin hosts; member joins). Serverless WebRTC over local Wi-Fi.
-  syncHostStart(): Promise<void>;
-  syncHostConnect(answerCode: string): Promise<void>;
-  syncGuestAnswer(offerCode: string): Promise<void>;
+  // sync (symmetric: any phone can host or join). Serverless WebRTC over local Wi-Fi.
+  syncStart(): Promise<void>;                    // become host: create an offer to be scanned
+  syncApplyReply(replyCode: string): Promise<void>; // host: apply the joiner's reply code
+  syncJoin(offerCode: string): Promise<void>;    // become guest: apply an offer, make a reply
   syncStop(): void;
 
   // opt-in Google Drive cloud sync (one shared household Google account).

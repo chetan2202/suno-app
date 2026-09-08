@@ -41,7 +41,7 @@ export class AppController {
   private updateApply: (() => void) | null = null;
 
   private session: WebRtcSession | null = null;
-  private sync: SyncView = { active: false, role: null, status: "", shareCode: "", busy: false };
+  private sync: SyncView = { active: false, role: null, status: "", shareCode: "", busy: false, result: null };
   private readonly cloud: DriveCloudSync;
 
   constructor(
@@ -136,29 +136,29 @@ export class AppController {
     addCustomItem: async (name, unit) => { await this.app.household.addCustomItem(name, unit); this.render(); },
     removeCustomItem: async (id) => { await this.app.household.removeCustomItem(id); this.render(); },
 
-    syncHostStart: async () => {
+    syncStart: async () => {
       const session = this.newSession();
-      this.sync = { active: true, role: "host", status: SYNC_TEXT.waiting, shareCode: "", busy: true };
+      this.sync = { active: true, role: "host", status: SYNC_TEXT.waiting, shareCode: "", busy: true, result: null };
       this.render();
       this.sync.shareCode = await session.createOffer();
       this.sync.busy = false;
-      this.sync.status = "Share the code below, then paste the member's reply.";
+      this.sync.status = "Let the other phone scan this, then scan their reply.";
       this.render();
     },
-    syncHostConnect: async (answerCode) => {
-      if (!this.session || !answerCode.trim()) return;
+    syncApplyReply: async (replyCode) => {
+      if (!this.session || !replyCode.trim()) return;
       this.sync.status = "Connecting…";
       this.render();
-      try { await this.session.applyAnswer(answerCode); } catch { this.sync.status = "That reply code was not valid."; this.render(); }
+      try { await this.session.applyAnswer(replyCode); } catch { this.sync.status = "That reply code was not valid."; this.render(); }
     },
-    syncGuestAnswer: async (offerCode) => {
+    syncJoin: async (offerCode) => {
       if (!offerCode.trim()) return;
       const session = this.newSession();
-      this.sync = { active: true, role: "guest", status: "Generating reply…", shareCode: "", busy: true };
+      this.sync = { active: true, role: "guest", status: "Generating reply…", shareCode: "", busy: true, result: null };
       this.render();
       try {
         this.sync.shareCode = await session.applyOffer(offerCode);
-        this.sync.status = "Send the reply back to the admin.";
+        this.sync.status = "Show this reply back to the other phone.";
       } catch {
         this.sync.status = "That sync code was not valid.";
       }
@@ -186,8 +186,9 @@ export class AppController {
     const service = new SyncService({
       getOperations: () => this.app.grocery.getOperations(),
       myMemberId: () => this.app.household.getSettings().my_member_id,
-      ingest: async (ops) => { await this.app.grocery.ingestOperations(ops); this.app.todo.refresh(); },
+      ingest: async (ops) => { const n = await this.app.grocery.ingestOperations(ops); this.app.todo.refresh(); return n; },
       onStatus: (status) => { this.sync.status = SYNC_TEXT[status]; this.render(); },
+      onResult: (newOps) => { this.sync.result = { newOps }; this.render(); },
       onChange: () => this.render(),
     });
     service.attach(session);
@@ -198,7 +199,7 @@ export class AppController {
   private syncStopInternal(): void {
     this.session?.close();
     this.session = null;
-    this.sync = { active: false, role: null, status: "", shareCode: "", busy: false };
+    this.sync = { active: false, role: null, status: "", shareCode: "", busy: false, result: null };
   }
 
   private buildCtx(): ViewCtx {

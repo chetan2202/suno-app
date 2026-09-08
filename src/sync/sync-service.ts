@@ -17,9 +17,11 @@ export interface SyncDeps {
   getOperations: () => readonly Operation[];
   /** This device's member id (or null if not identified). */
   myMemberId: () => string | null;
-  /** Merge received operations into the shared store and refresh module state. */
-  ingest: (ops: Operation[]) => Promise<void>;
+  /** Merge received operations into the shared store; returns how many were new. */
+  ingest: (ops: Operation[]) => Promise<number>;
   onStatus: (status: SyncStatus) => void;
+  /** Report the outcome of an exchange: how many previously-unknown ops we merged. */
+  onResult: (newOps: number) => void;
   onChange: () => void;
 }
 
@@ -51,8 +53,9 @@ export class SyncService {
 
   private async ingest(ops: Operation[]): Promise<void> {
     if (!Array.isArray(ops)) return;
-    await this.deps.ingest(ops);
+    const newOps = await this.deps.ingest(ops);
     this.deps.onStatus("synced");
+    this.deps.onResult(newOps);
     this.deps.onChange();
   }
 }

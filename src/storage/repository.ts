@@ -49,12 +49,13 @@ export class GroceryRepository {
 
   /**
    * Merge operations received from a peer during sync (idempotent). Re-derives grocery state
-   * only when something new arrived.
+   * only when something new arrived. Returns the number of previously-unknown operations
+   * merged, so the UI can tell "synced, N new" from "no new data".
    */
-  async ingestOperations(incoming: readonly Operation[]): Promise<GroceryState> {
+  async ingestOperations(incoming: readonly Operation[]): Promise<number> {
     const fresh = await this.store.ingest(incoming);
     if (fresh.length > 0) this.state = reduce(this.store.getOperations());
-    return this.state;
+    return fresh.length;
   }
 
   addItem(input: AddPayload): Promise<GroceryState> {
