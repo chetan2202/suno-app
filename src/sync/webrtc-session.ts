@@ -67,12 +67,12 @@ export class WebRtcSession implements SyncSession {
   }
 
   async applyAnswer(code: string): Promise<void> {
-    await this.pc.setRemoteDescription(await decodeSignal(code));
+    await this.pc.setRemoteDescription(decodeSignal(code));
   }
 
   async applyOffer(code: string): Promise<string> {
     this.pc.ondatachannel = (e) => this.wire(e.channel);
-    await this.pc.setRemoteDescription(await decodeSignal(code));
+    await this.pc.setRemoteDescription(decodeSignal(code));
     const answer = await this.pc.createAnswer();
     await this.pc.setLocalDescription(answer);
     await waitForIce(this.pc);

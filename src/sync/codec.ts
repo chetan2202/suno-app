@@ -1,41 +1,29 @@
 // Compact, scannable encoding for WebRTC signalling codes.
 //
-// A raw offer/answer (SDP, wrapped in JSON) is ~1 KB. Rendered as a QR that is far too
-// dense to scan from another phone's screen - the camera cannot resolve the tiny modules,
-// so the pairing "just doesn't catch". SDP is highly repetitive text, so we gzip it before
-// base64: that cuts the payload enough to make a single, comfortably scannable QR.
+// A raw offer/answer (SDP, wrapped in JSON) is ~1 KB, which makes a QR far too dense to scan
+// from another phone's screen. SDP is highly repetitive text, so we gzip it before base64:
+// that cuts the payload enough for a single, comfortably scannable QR.
 //
-// Both peers run this same codec. A one-character tag records the format so decoding stays
-// unambiguous, and an untagged (legacy plain base64-JSON) code from an older build is still
-// accepted.
+// Compression is done with fflate (pure JavaScript, standard gzip) rather than the browser's
+// CompressionStream, so the code is identical and interoperable on every phone and browser -
+// including iOS, where CompressionStream only exists on very recent versions. A one-character
+// tag records the format; a legacy untagged (plain base64-JSON) code is still accepted.
+
+import { gzipSync, gunzipSync, strToU8, strFromU8 } from "fflate";
 
 const TAG_GZIP = "g";
-const TAG_PLAIN = "j"; // used only where CompressionStream is unavailable
 
-/** Encode an offer/answer description into a compact code (compressed where possible). */
-export async function encodeSignal(desc: RTCSessionDescription | null): Promise<string> {
+/** Encode an offer/answer description into a compact, scannable code. */
+export function encodeSignal(desc: RTCSessionDescription | null): string {
   const json = JSON.stringify(desc);
-  if (typeof CompressionStream === "undefined") return TAG_PLAIN + btoa(json);
-  return TAG_GZIP + bytesToBase64(await gzip(json));
+  return TAG_GZIP + bytesToBase64(gzipSync(strToU8(json)));
 }
 
 /** Decode a code produced by encodeSignal (or a legacy untagged base64-JSON code). */
-export async function decodeSignal(code: string): Promise<RTCSessionDescriptionInit> {
+export function decodeSignal(code: string): RTCSessionDescriptionInit {
   const s = code.trim();
-  const body = s.slice(1);
-  if (s[0] === TAG_GZIP) return JSON.parse(await gunzip(base64ToBytes(body))) as RTCSessionDescriptionInit;
-  if (s[0] === TAG_PLAIN) return JSON.parse(atob(body)) as RTCSessionDescriptionInit;
-  return JSON.parse(atob(s)) as RTCSessionDescriptionInit; // legacy untagged
-}
-
-async function gzip(text: string): Promise<Uint8Array> {
-  const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
-}
-
-async function gunzip(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-  return new Response(stream).text();
+  if (s[0] === TAG_GZIP) return JSON.parse(strFromU8(gunzipSync(base64ToBytes(s.slice(1))))) as RTCSessionDescriptionInit;
+  return JSON.parse(atob(s)) as RTCSessionDescriptionInit; // legacy untagged base64-JSON
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -44,7 +32,7 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(bin);
 }
 
-function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
+function base64ToBytes(b64: string): Uint8Array {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);

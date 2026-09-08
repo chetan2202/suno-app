@@ -2,6 +2,7 @@
 // scan one from the camera.
 
 import QRCode from "qrcode";
+import jsQR from "jsqr";
 import { el } from "./dom.js";
 
 /** Error-correction level: L (most data capacity, sparsest) ... H (most robust, densest). */
@@ -23,15 +24,18 @@ export function qrImage(text: string, size = 200, level: QrLevel = "M"): HTMLIma
   return img;
 }
 
-/** True if this browser can scan QR codes from the camera. */
+/** True if this browser can open the camera (all we need - decoding is pure JS via jsQR).
+ * getUserMedia requires a secure context (https/localhost), so this is false on plain http. */
 export function canScan(): boolean {
-  return "BarcodeDetector" in globalThis && !!navigator.mediaDevices?.getUserMedia;
+  return !!navigator.mediaDevices?.getUserMedia;
 }
 
 /**
- * Scan a single QR code from the camera into the given <video>. Calls onCode with the first
- * code found (then stops), or onError if the camera/detector is unavailable. Returns a stop
- * function that releases the camera. Used by both the invite-join and Wi-Fi-sync flows.
+ * Scan a single QR code from the camera into the given <video>. Decoding uses jsQR (pure
+ * JavaScript), so it works identically on every phone and browser - including iOS Safari,
+ * which lacks the BarcodeDetector API. Calls onCode with the first code found (then stops),
+ * or onError if the camera is unavailable. Returns a stop function that releases the camera.
+ * Used by both the invite-join and Wi-Fi-sync flows.
  */
 export async function scanQr(
   video: HTMLVideoElement,
@@ -40,27 +44,28 @@ export async function scanQr(
 ): Promise<() => void> {
   let stream: MediaStream | null = null;
   let stop = false;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Detector = (globalThis as any).BarcodeDetector;
-    const detector = new Detector({ formats: ["qr_code"] });
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     video.srcObject = stream;
     await video.play();
-    const tick = async () => {
+    const tick = () => {
       if (stop) return;
-      try {
-        const codes = await detector.detect(video);
-        if (codes[0]?.rawValue) {
-          onCode(String(codes[0].rawValue));
+      if (ctx && video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const found = jsQR(frame.data, frame.width, frame.height, { inversionAttempts: "dontInvert" });
+        if (found?.data) {
+          onCode(found.data);
           return;
         }
-      } catch {
-        /* keep polling */
       }
       requestAnimationFrame(tick);
     };
-    void tick();
+    requestAnimationFrame(tick);
   } catch {
     onError();
   }

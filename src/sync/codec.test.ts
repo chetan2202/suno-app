@@ -12,21 +12,23 @@ const sample: RTCSessionDescriptionInit = {
     "a=fingerprint:sha-256 AB:CD:EF:00:11:22:33:44:55:66:77:88:99\r\na=setup:actpass\r\n",
 };
 
+const asDesc = sample as unknown as RTCSessionDescription;
+
 describe("signalling codec", () => {
-  it("round-trips a description and compresses it well", async () => {
-    const code = await encodeSignal(sample as unknown as RTCSessionDescription);
-    expect(code[0]).toBe("g"); // gzip path in the node test env
-    expect(code.length).toBeLessThan(JSON.stringify(sample).length); // smaller than raw base64 would be
-    expect(await decodeSignal(code)).toEqual(sample);
+  it("round-trips a description and compresses it well", () => {
+    const code = encodeSignal(asDesc);
+    expect(code[0]).toBe("g");
+    expect(code.length).toBeLessThan(JSON.stringify(sample).length);
+    expect(decodeSignal(code)).toEqual(sample);
   });
 
-  it("accepts a legacy untagged base64-JSON code", async () => {
+  it("accepts a legacy untagged base64-JSON code", () => {
     const legacy = btoa(JSON.stringify(sample));
-    expect(await decodeSignal(legacy)).toEqual(sample);
+    expect(decodeSignal(legacy)).toEqual(sample);
   });
 
-  it("tolerates surrounding whitespace (e.g. a pasted code)", async () => {
-    const code = await encodeSignal(sample as unknown as RTCSessionDescription);
-    expect(await decodeSignal(`  ${code}\n`)).toEqual(sample);
+  it("tolerates surrounding whitespace (e.g. a pasted code)", () => {
+    const code = encodeSignal(asDesc);
+    expect(decodeSignal(`  ${code}\n`)).toEqual(sample);
   });
 });
