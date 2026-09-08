@@ -4,41 +4,8 @@
 
 import { el } from "../dom.js";
 import type { ViewCtx } from "../context.js";
-import { canScan } from "../qr.js";
+import { canScan, scanQr } from "../qr.js";
 import { icon } from "../icon.js";
-
-async function scanOnce(video: HTMLVideoElement, onCode: (code: string) => void, onError: () => void): Promise<() => void> {
-  let stream: MediaStream | null = null;
-  let stop = false;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Detector = (globalThis as any).BarcodeDetector;
-    const detector = new Detector({ formats: ["qr_code"] });
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    video.srcObject = stream;
-    await video.play();
-    const tick = async () => {
-      if (stop) return;
-      try {
-        const codes = await detector.detect(video);
-        if (codes[0]?.rawValue) {
-          onCode(String(codes[0].rawValue));
-          return;
-        }
-      } catch {
-        /* keep polling */
-      }
-      requestAnimationFrame(tick);
-    };
-    void tick();
-  } catch {
-    onError();
-  }
-  return () => {
-    stop = true;
-    stream?.getTracks().forEach((t) => t.stop());
-  };
-}
 
 export function renderJoin(ctx: ViewCtx): HTMLElement {
   const code = el("textarea", { class: "field code-input", placeholder: "Paste the invite code here" }) as HTMLTextAreaElement;
@@ -56,7 +23,7 @@ export function renderJoin(ctx: ViewCtx): HTMLElement {
     video.setAttribute("playsinline", "");
     const scanBtn = el("button", { class: "btn ghost", text: "Scan QR with camera", onClick: () => {
       scanArea.replaceChildren(video);
-      void scanOnce(
+      void scanQr(
         video,
         (raw) => ctx.actions.joinFromCode(raw).catch(() => { error.textContent = "That QR is not a valid invite."; }),
         () => { error.textContent = "Camera not available. Paste the code instead."; },
