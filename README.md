@@ -4,6 +4,7 @@
 accounts, cloud storage, or a permanent backend. It is a **local-first PWA**: every family
 member keeps their own data on their own phone, and devices reconcile directly with each
 other over the local network.
+Suno will support local server (running on intranet+ Google drive + cloud support) in further versions if more people want to try it.
 
 Suno is not a single-purpose app. It is a **super-app made of modules**:
 
