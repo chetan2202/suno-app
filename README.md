@@ -116,3 +116,6 @@ https://<github-user>.github.io/<repository>/
 `requirements.md` (product/security/usability requirements), `architecture.md` (design and
 layering), and the git-ignored working files `plan.md` / `progress.md` / `discussion.md`
 (planning, append-only progress log, and cross-session Q&A).
+
+
+new version releasing on 20th Sep 2026
